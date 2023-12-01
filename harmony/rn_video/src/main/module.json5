@@ -1,0 +1,9 @@
+{
+  "module": {
+   "name": "rn_video",
+		"type": "har",
+		"deviceTypes": [
+			"default"
+		]
+  },
+}
