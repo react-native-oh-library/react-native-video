@@ -98,9 +98,9 @@ public:
                 
                 float width = (float)arkJs.getDouble(naturalSizeObject.getProperty("width"));
                 float height = (float)arkJs.getDouble(naturalSizeObject.getProperty("height"));
-                std::string orientation = arkJs.getString(naturalSizeObject.getProperty("orientation"))
+                std::string orientation = arkJs.getString(naturalSizeObject.getProperty("orientation"));
                 
-                LOG(INFO) << "RNCVideoEventEmitRequestHandler RNC_VIDEO_LOAD naturalSizeObject width: " << width ;
+                LOG(INFO) << "RNCVideoEventEmitRequestHandler RNC_VIDEO_LOAD naturalSizeObject width : " << width ;
                 
                 facebook::react::RNCVideoEventEmitter::OnVideoLoadNaturalSize naturalSize {
                     width, height, orientation
@@ -179,20 +179,20 @@ public:
             }
             case RNCVideoEventType::RNC_VIDEO_PLAYBACK_STALLED : {
                 react::RNCVideoEventEmitter::OnPlaybackStalled event{};
-                LOG(INFO) << "RNCVideoEventEmitRequestHandler OnPlaybackStalled" ;
+                LOG(INFO) << "RNCVideoEventEmitRequestHandler OnPlaybackStalled:" ;
                 eventEmitter->onPlaybackStalled(event);
                 break;
             }
             case RNCVideoEventType::RNC_VIDEO_PLAYBACK_RESUME: {
                 react::RNCVideoEventEmitter::OnPlaybackResume event{};
-                LOG(INFO) << "RNCVideoEventEmitRequestHandler OnPlaybackResume" ;
+                LOG(INFO) << "RNCVideoEventEmitRequestHandler OnPlaybackResume:" ;
                 eventEmitter->onPlaybackResume(event);
                 break;
             }
             case RNCVideoEventType::RNC_VIDEO_READY_FOR_DISPLAY: 
             {
                 react::RNCVideoEventEmitter::OnReadyForDisplay event{};
-                LOG(INFO) << "RNCVideoEventEmitRequestHandler OnReadyForDisplay" ;
+                LOG(INFO) << "RNCVideoEventEmitRequestHandler OnReadyForDisplay:" ;
                 eventEmitter->onReadyForDisplay(event);
                 break;
             }

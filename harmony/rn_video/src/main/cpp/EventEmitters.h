@@ -33,7 +33,7 @@ class JSI_EXPORT RNCVideoEventEmitter : public ViewEventEmitter {
 public:
     using ViewEventEmitter::ViewEventEmitter;
      
-    static OnVideoAudioBecomingNoisy{};
+    struct OnVideoAudioBecomingNoisy{};
      
     struct OnBandwidthUpdate {
         Float bitrate;
@@ -57,13 +57,13 @@ public:
     struct OnVideoLoadNaturalSize {
         Float width;
         Float height;
-        std:string orientation;
+        std::string orientation;
     };
 
     struct OnVideoLoadAudioTracks {
         int index;
         std::string title;
-        std::string lauguage;
+        std::string language;
         std::string type;
     };
 
@@ -89,7 +89,7 @@ public:
     struct OnVideoLoadStart {
         bool isNetwork;
         std::string type;
-        std::string url;
+        std::string uri;
     };
 
    struct OnReadyForDisplay {};
@@ -98,7 +98,7 @@ public:
         bool isActive;
     };
 
-   struct OnPlaybackRateChanged {
+   struct OnPlaybackRateChange {
         Float playbackRate;
     };
 
@@ -115,7 +115,7 @@ public:
 
     struct OnRestoreUserInterfaceForPictureInPictureStop {};
    
-    struct onTimedMetadata {};
+    struct OnTimedMetadata {};
 
     struct OnVideoError{
       std::string error;
@@ -126,8 +126,8 @@ public:
     };
 
 
-    struct onPlaybackStalled{};
-    struct onPlaybackResume {};
+    struct OnPlaybackStalled{};
+    struct OnPlaybackResume {};
 
     struct OnAudioFocusChanged{
       bool hasFocus;
@@ -161,7 +161,7 @@ public:
     void onVideoLoadStart(OnVideoLoadStart value) const;
     void onReadyForDisplay(OnReadyForDisplay value) const;
     void onPictureInPictureStatusChanged(OnPictureInPictureStatusChanged value) const;
-    void onPlaybackRateChanged(OnPlaybackRateChanged value) const;
+    void onPlaybackRateChange(OnPlaybackRateChange value) const;
     
     
     void onVideoProgress(OnVideoProgress value) const;

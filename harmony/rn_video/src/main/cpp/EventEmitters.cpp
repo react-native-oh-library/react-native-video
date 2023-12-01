@@ -101,8 +101,8 @@ void RNCVideoEventEmitter::onVideoLoad(OnVideoLoad event) const {
             naturalSize.setProperty(runtime,"orientation",event.naturalSize.orientation);
             payload.setProperty(runtime,"naturalSize",naturalSize);
 
-             auto audioTracks = jsi::Array(runtime，event.audioTracks.size());
-             for(int i = 0 ; i < event.audioTracks.size(); i++){
+             auto audioTracks = jsi::Array(runtime,event.audioTracks.size());
+             for(int i = 0 ; i < event.audioTracks.size(); ++i){
                auto subAudioTracks = jsi::Object(runtime);
                subAudioTracks.setProperty(runtime,"index",event.audioTracks[i].index);
                subAudioTracks.setProperty(runtime,"title",event.audioTracks[i].title);
@@ -112,8 +112,8 @@ void RNCVideoEventEmitter::onVideoLoad(OnVideoLoad event) const {
              }
              payload.setProperty(runtime,"audioTracks",audioTracks);
 
-            auto videoTracks = jsi::Array(runtime，event.videoTracks.size());
-             for(int i = 0 ; i < event.videoTracks.size(); i++){
+            auto videoTracks = jsi::Array(runtime, event.videoTracks.size());
+             for(int i = 0 ; i < event.videoTracks.size(); ++i){
                auto subVideoTracks = jsi::Object(runtime);
                subVideoTracks.setProperty(runtime,"trackId",event.videoTracks[i].trackId);
                subVideoTracks.setProperty(runtime,"bitrate",event.videoTracks[i].bitrate);
@@ -135,7 +135,7 @@ void RNCVideoEventEmitter::onVideoLoadStart(OnVideoLoadStart event) const {
         auto payload = jsi::Object(runtime);
         payload.setProperty(runtime,"isNetwork",event.isNetwork);
         payload.setProperty(runtime,"type",event.type);
-        payload.setProperty(runtime,"url",event.url);
+        payload.setProperty(runtime,"uri",event.uri);
         return payload;
     });
 }
@@ -159,8 +159,8 @@ void RNCVideoEventEmitter::onPictureInPictureStatusChanged(OnPictureInPictureSta
 }
 
 
-void RNCVideoEventEmitter::onPlaybackRateChanged(OnPlaybackRateChanged event) const {
-    dispatchEvent("playbackRateChanged",[event=std::move(event)](jsi::Runtime &runtime){
+void RNCVideoEventEmitter::onPlaybackRateChange(OnPlaybackRateChange event) const {
+    dispatchEvent("playbackRateChange",[event=std::move(event)](jsi::Runtime &runtime){
         auto payload = jsi::Object(runtime);
         payload.setProperty(runtime,"playbackRate",event.playbackRate);
         return payload;
