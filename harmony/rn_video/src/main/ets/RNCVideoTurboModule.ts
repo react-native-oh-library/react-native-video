@@ -21,17 +21,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import {TurboModule, TurboModuleContext} from 'rnoh';
+import {TurboModule, TurboModuleContext} from 'rnoh/ts';
 
 export class RNCVideoTurboModule extends TurboModule {
 
   constructor(protected ctx: TurboModuleContext) {
     super(ctx);
-    console.log('[RNOH]:RNCVideoTurboModule constructor');
+    // console.log('[RNOH]:RNCVideoTurboModule constructor');
   }
 
   voidFunc() {
-    console.log('RNOH SampleTurboModule::voidFunc');
+    // console.log('RNOH SampleTurboModule::voidFunc');
   }
 
 

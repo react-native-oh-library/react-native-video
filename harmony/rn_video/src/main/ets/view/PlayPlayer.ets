@@ -25,6 +25,7 @@
 import { VideoController } from '../controller/VideoController';
 import { CommonConstants } from '../common/constants/CommonConstants';
 import { PlayConstants } from '../common/constants/PlayConstants';
+import Logger from '../common/util/Logger';
 
 export interface IPlayPlayer {
   src: string
@@ -38,6 +39,8 @@ export interface IPlayPlayer {
   brightShow:boolean
   volumeShow:boolean
   bright: number
+  videoHeight: string
+  videoWidth: string
 }
 
 @Component
@@ -52,15 +55,16 @@ export struct PlayPlayer {
   @Consume('resizeModeVar') @Watch("onChanged") resizeMode:string;
   @Consume('disableFocusVar') @Watch("onChanged") disableFocus: boolean;
   @Consume('preventsDisplaySleepDuringVideoPlaybackVar') @Watch("setPreventsDisplaySleepDuringVideoPlaybackModifier") preventsDisplaySleepDuringVideoPlayback: boolean;
-  // @Consume('videoPropVar') videoProp: RNCVideoProps ;/* */
 
-  // @State volume: number = PlayConstants.PLAY_PAGE.VOLUME;
   @State bright: number = PlayConstants.PLAY_PAGE.BRIGHT;
   /* 不需要显示 */
   @State volumeShow: boolean = PlayConstants.PLAY_PAGE.VOLUME_SHOW;
   @State brightShow: boolean = PlayConstants.PLAY_PAGE.BRIGHT_SHOW;
   private xComponentController: XComponentController = new XComponentController();;
   private surfaceID: number = 0;
+
+  @State videoHeight: string = CommonConstants.FULL_PERCENT;
+  @State videoWidth: string = CommonConstants.FULL_PERCENT;
 
   aboutToAppear() {
     if (this.playVideoModel) {
@@ -70,10 +74,10 @@ export struct PlayPlayer {
   }
   // @Watch cb
   onChanged(propName: string) : void {
-    console.info(`RNOH in Player, onChanged, ${JSON.stringify(propName)}`);
-    console.info(`RNOH in Player, onChanged, ${JSON.stringify(this.repeat)}`);
-    console.info(`RNOH in Player, onChanged,resizeMode= ${JSON.stringify(this.resizeMode)}`);
-    console.info(`RNOH in Player, onChanged,disableFocus= ${JSON.stringify(this.disableFocus)}`);
+    Logger.info(`RNOH in Player, onChanged, ${JSON.stringify(propName)}`);
+    Logger.info(`RNOH in Player, onChanged, ${JSON.stringify(this.repeat)}`);
+    Logger.info(`RNOH in Player, onChanged,resizeMode= ${JSON.stringify(this.resizeMode)}`);
+    Logger.info(`RNOH in Player, onChanged,disableFocus= ${JSON.stringify(this.disableFocus)}`);
     //this.playVideoModel.avPlayer.loop = this.playerThis.repeat == 1;
     if (this.playVideoModel) {
       this.playVideoModel.updateProp()
@@ -81,17 +85,17 @@ export struct PlayPlayer {
   }
 
   onSrcChanged(propName: string) : void {
-    console.info(`RNOH in Player, onSrcChanged,srcout: ${JSON.stringify(this.src)}`);
-    console.info(`RNOH in Player, onSrcChanged,propName: ${JSON.stringify(propName)}`);
+    Logger.info(`RNOH in Player, onSrcChanged,srcout: ${JSON.stringify(this.src)}`);
+    Logger.info(`RNOH in Player, onSrcChanged,propName: ${JSON.stringify(propName)}`);
     this.playVideoModel.switchVideo(this.src);
   }
   onMutedChanged(propName: string) : void {
-    console.info(`RNOH in Player, onMutedChanged, ${JSON.stringify(this.muted)}`);
+    Logger.info(`RNOH in Player, onMutedChanged, ${JSON.stringify(this.muted)}`);
     this.playVideoModel.switchMuted(this.muted);
   }
 
   onPausedChanged(propName: string) : void {
-    console.info(`RNOH in Player, onPausedChanged, ${JSON.stringify(this.paused)}`);
+    Logger.info(`RNOH in Player, onPausedChanged, ${JSON.stringify(this.paused)}`);
     this.playVideoModel.switchPlayOrPause(this.paused);
   }
 
@@ -100,7 +104,7 @@ export struct PlayPlayer {
   }
 
   build() {
-    Stack() {
+    Flex({justifyContent: FlexAlign.Center,alignItems: ItemAlign.Center}) {
       XComponent({
         id: PlayConstants.PLAY_PLAYER.ID,
         type: PlayConstants.PLAY_PLAYER.TYPE,
@@ -113,15 +117,15 @@ export struct PlayPlayer {
             surfaceHeight: PlayConstants.PLAY_PLAYER.SURFACE_HEIGHT
           });
           this.surfaceID = Number(this.xComponentController.getXComponentSurfaceId());
-          console.info(`RNOH in Player, tofirstPlay, ${JSON.stringify(this.src)}`);
+          Logger.info(`RNOH in Player, tofirstPlay, ${JSON.stringify(this.src)}`);
           if (this.src == '') {
             this.playVideoModel.firstPlay(this.index, this.src, this.surfaceID);
           } else {
             this.playVideoModel.firstPlay(this.index, this.src, this.surfaceID);
           }
         })
-        .width(CommonConstants.FULL_PERCENT)
-        .height(CommonConstants.FULL_PERCENT)
+        .width(this.videoWidth)
+        .height(this.videoHeight)
 
     }
     .width(CommonConstants.FULL_PERCENT)

@@ -83,7 +83,7 @@ export class VideoController {
    * AVPlayer binding event.
    */
   bindState() {
-    console.info(`RNOH in ctrl, bindState`);
+    Logger.info(`RNOH in ctrl, bindState`);
     if (this.avPlayer){
 
       this.onStateChange();
@@ -93,23 +93,23 @@ export class VideoController {
       });
 
       this.avPlayer.on(Events.DURATION_UPDATE, (durationA) => {
-        console.info('RNOH in ctrl,durationUpdate success,new duration is :' + durationA)
+        Logger.info('RNOH in ctrl,durationUpdate success,new duration is :' + durationA)
         this.duration = durationA == 0 ? 0 : Math.floor(durationA / 1000); // ms->s
       })
 
       this.avPlayer.on(Events.ERROR, (error) => {
-        console.info(`RNOH in ctrl, event error： ${JSON.stringify(error)}`);
+        Logger.info(`RNOH in ctrl, event error： ${JSON.stringify(error)}`);
         this.playError(JSON.stringify(error));
       })
 
       this.avPlayer.on(Events.END_OF_STREAM, () => {
-        console.info('RNOH in ctrl, END_OF_STREAM')
+        Logger.info('RNOH in ctrl, END_OF_STREAM')
         this.onVideoEnd();
       })
 
       this.avPlayer.on(Events.BUFFERING_UPDATE, (infoType: media.BufferingInfoType, value: number) => {
         /* 播放缓存事件回调方法。BufferingInfoType为BUFFERING_PERCENT或CACHED_DURATION时，value值有效，否则固定为0。 */
-        console.info('RNOH in ctrl, BUFFERING_UPDATE')
+        Logger.info('RNOH in ctrl, BUFFERING_UPDATE')
         switch (infoType) {
           case media.BufferingInfoType.BUFFERING_START: // 表示缓存开始，
             this.onVideoPlaybackStalled();
@@ -123,7 +123,7 @@ export class VideoController {
           /* 此时的value有值，表示缓存百分比*/
             break;
           case media.BufferingInfoType.CACHED_DURATION: // 表示缓存时长，毫秒（ms）。
-            console.info(`RNOH in ctrl, onVideoProgress CACHED_DURATION value = ${value}`);
+            Logger.info(`RNOH in ctrl, onVideoProgress CACHED_DURATION value = ${value}`);
             this.mVideoBufferedDuration = Math.floor(value / 1000) // ms--?s
             break;
           default:
@@ -132,10 +132,10 @@ export class VideoController {
       })
 
       this.avPlayer.on(Events.SEEK_DONE, (seekDoneTime: number) => {
-        console.info('RNOH in ctrl, seekDone success,and seek time is:' + seekDoneTime)
+         Logger.info(`RNOH in ctrl, seekDone success,and seek time is: ${seekDoneTime} `)
       })
     }
-    console.info(`RNOH in ctrl, bindState end`);
+    Logger.info(`RNOH in ctrl, bindState end`);
   }
 
   /**
@@ -214,7 +214,7 @@ export class VideoController {
     if (this.avPlayer && this.avPlayer.state == 'idle') {
       this.avPlayer.url = this.url;
     } else {
-      console.info(`RNOH in ctrl, avPlayer no`);
+      Logger.info(`RNOH in ctrl, avPlayer no`);
       this.flagtd = true;
     }
   }
@@ -258,34 +258,34 @@ export class VideoController {
    * @return
    */
   switchVideo(newUrl: string) {
-    console.info(`RNOH in ctrl switchVideo,  state ${JSON.stringify(this.avPlayer.state)}`);
+    Logger.info(`RNOH in ctrl switchVideo,  state ${JSON.stringify(this.avPlayer.state)}`);
     this.bindState();
-    console.info(`RNOH in ctrl switchVideo, 100`);
-    console.info(`RNOH in ctrl switchVideo,  state ${JSON.stringify(this.url)},new: ${JSON.stringify(newUrl)}`);
+    Logger.info(`RNOH in ctrl switchVideo, 100`);
+    Logger.info(`RNOH in ctrl switchVideo,  state ${JSON.stringify(this.url)},new: ${JSON.stringify(newUrl)}`);
     this.url = newUrl;
-    console.info(`RNOH in ctrl switchVideo, 200`);
+    Logger.info(`RNOH in ctrl switchVideo, 200`);
     if (this.surfaceId == 0 || this.surfaceId == undefined) {
-      console.info(`RNOH in ctrl switchVideo, 210`);
+      Logger.info(`RNOH in ctrl switchVideo, 210`);
       return;
     }
 
     if ('idle' == (this.avPlayer.state)) {
-      console.info(`RNOH in ctrl switchVideo, 201 ,${this.url}`);
+      Logger.info(`RNOH in ctrl switchVideo, 201 ,${this.url}`);
       this.avPlayer.url = this.url;
     } else {
-      console.info(`RNOH in ctrl switchVideo, 202 ,reset`);
+      Logger.info(`RNOH in ctrl switchVideo, 202 ,reset`);
       this.avPlayer.reset();
-      console.info(`RNOH in ctrl switchVideo, 202 ,${this.url}`);
+      Logger.info(`RNOH in ctrl switchVideo, 202 ,${this.url}`);
     }
-    console.info(`RNOH in ctrl switchVideo, 300`);
-    console.info(`RNOH in ctrl switchVideo,  state11 ${JSON.stringify(this.avPlayer.state)}`);
+    Logger.info(`RNOH in ctrl switchVideo, 300`);
+    Logger.info(`RNOH in ctrl switchVideo,  state11 ${JSON.stringify(this.avPlayer.state)}`);
   }
 
   /**
    * Switching Between Video Play and Pause.
    */
   switchPlayOrPause(paused: boolean) {
-    console.info(`RNOH in ctrl switchPlayOrPause,state out= ${this.avPlayer.state};paused= ${JSON.stringify(paused)}`);
+    Logger.info(`RNOH in ctrl switchPlayOrPause,state out= ${this.avPlayer.state};paused= ${JSON.stringify(paused)}`);
     if (this.status === CommonConstants.STATUS_START && paused) {
       this.avPlayer.pause();
     } else {
@@ -310,10 +310,10 @@ export class VideoController {
         currentVolume = 1.0
       }
     }
-    console.info(`RNOH in ctrl, switchMuted, ${JSON.stringify(muted)} ,currentVolume= ${JSON.stringify(currentVolume)}`);
+    Logger.info(`RNOH in ctrl, switchMuted, ${JSON.stringify(muted)} ,currentVolume= ${JSON.stringify(currentVolume)}`);
     this.avPlayer.setVolume(currentVolume);
     this.avPlayer.on('volumeChange', (vol: number) => {
-      console.info('volumeChange success,and new volume is :' + vol)
+      Logger.info('RNOH in ctrl volumeChange success,and new volume is :' + vol)
       this.avPlayer.off('volumeChange')
     })
   }
@@ -333,9 +333,9 @@ export class VideoController {
    * @return
    */
   setSeekTime(value: number) {
-    console.info(`RNOH in RNCVideo setSeekTime== ${JSON.stringify(value)}`);
+    Logger.info(`RNOH in ctrl setSeekTime== ${JSON.stringify(value)}`);
     this.seekTime = value;
-    console.info(`RNOH in RNCVideo setSeekTime== ${this.seekTime}`);
+    Logger.info(`RNOH in ctrl setSeekTime== ${this.seekTime}`);
     /* seek 只能在prepared/playing/paused/complete状态调用 毫秒（ms）*/
     if (this.status === CommonConstants.STATUS_PREPARED ||
       this.status === CommonConstants.STATUS_START ||
@@ -343,7 +343,7 @@ export class VideoController {
       this.status === CommonConstants.STATUS_COMPLETED
     ) {
       this.avPlayer.seek(this.seekTime);
-      console.info(`RNOH in RNCVideo avPlayer.seek`);
+      Logger.info(`RNOH in ctrl avPlayer.seek`);
     }
   }
 
@@ -351,7 +351,7 @@ export class VideoController {
   initProps() {
     this.url = this.playerThis.src
 
-    console.info(`RNOH in VCTL, initProps repeat, ${JSON.stringify(this.playerThis.repeat)}`);
+    Logger.info(`RNOH in ctrl, initProps repeat, ${JSON.stringify(this.playerThis.repeat)}`);
     this.avPlayer.loop = this.playerThis.repeat;
 
     this.preMutedVolume = this.playerThis.volume;
@@ -370,17 +370,17 @@ export class VideoController {
   updateProp() {
     /* 设置 需要特定状态下设置*/
     if (this.avPlayer != null) {
-      console.info(`RNOH in ctrl, updateProp repeat, ${JSON.stringify(this.playerThis.repeat)}`);
+      Logger.info(`RNOH in ctrl, updateProp repeat, ${JSON.stringify(this.playerThis.repeat)}`);
       this.avPlayer.loop = this.playerThis.repeat
-      console.info(`RNOH in ctrl, updateProp volume, ${JSON.stringify(this.playerThis.volume)}`);
+      Logger.info(`RNOH in ctrl, updateProp volume, ${JSON.stringify(this.playerThis.volume)}`);
       this.avPlayer.setVolume(this.playerThis.volume); /* 更新音量 */
-      console.info(`RNOH in ctrl, updateProp resizeMode, ${JSON.stringify(this.playerThis.resizeMode)}`);
+      Logger.info(`RNOH in ctrl, updateProp resizeMode, ${JSON.stringify(this.playerThis.resizeMode)}`);
       /* 更新 resizeMode */
        this.convertResizeMode(this.playerThis.resizeMode)
       /* 更新音频流类型 */
       this.watchStatus();
     } else {
-      console.info(`RNOH in ctrl, updateProp ，  ${JSON.stringify(this.avPlayer)}`);
+      Logger.info(`RNOH in ctrl, updateProp ，  ${JSON.stringify(this.avPlayer)}`);
     }
 
   }
@@ -391,39 +391,34 @@ export class VideoController {
       case "contain": // 保持视频宽高比，居中播放。
         this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP
         if (this.avPlayer.height > this.avPlayer.width) { // 视频为竖屏
-          this.playPageThis.videoHeight = CommonConstants.FULL_PERCENT;
+          this.playerThis.videoHeight = CommonConstants.FULL_PERCENT;
           let width = (CommonConstants.ONE_HUNDRED * this.avPlayer.width / this.avPlayer.height).toFixed(2)
-          this.playPageThis.videoWidth = `${width}%`;
-          this.playPageThis.videoPosition = FlexAlign.Center;
+          this.playerThis.videoWidth = `${width}%`;
         } else { // 视频为横屏
           /* 这里要实现横屏满，竖向成比例，居中 */
-          this.playPageThis.videoWidth = CommonConstants.FULL_PERCENT;
+          this.playerThis.videoWidth = CommonConstants.FULL_PERCENT;
           let height = (CommonConstants.ONE_HUNDRED * this.avPlayer.height / this.avPlayer.width).toFixed(2)
-          this.playPageThis.videoHeight = `${height}%`;
-          this.playPageThis.videoPosition = FlexAlign.Center;
+          this.playerThis.videoHeight = `${height}%`;
         }
             break;
       case "cover": // 保持视频宽高比拉伸至填满窗口，内容可能会有裁剪。
       /* 这种模式，取视频最小的边同窗口比进行缩放，最小边填满窗口最小边 */
         this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP
         if (this.avPlayer.height > this.avPlayer.width) { // 视频为竖屏
-          this.playPageThis.videoWidth = CommonConstants.FULL_PERCENT; // 竖屏则宽度满屏，进行高度比例放大
+          this.playerThis.videoWidth = CommonConstants.FULL_PERCENT; // 竖屏则宽度满屏，进行高度比例放大
           let height = (CommonConstants.ONE_HUNDRED * this.avPlayer.height / this.avPlayer.width).toFixed(2)
-          this.playPageThis.videoHeight = `${height}%`;
-          this.playPageThis.videoPosition = FlexAlign.Center;
+          this.playerThis.videoHeight = `${height}%`;
         } else {
-          this.playPageThis.videoHeight = CommonConstants.FULL_PERCENT; // 横屏则高度满屏，进行宽度比例放大
+          this.playerThis.videoHeight = CommonConstants.FULL_PERCENT; // 横屏则高度满屏，进行宽度比例放大
           let width = (CommonConstants.ONE_HUNDRED * this.avPlayer.width / this.avPlayer.height).toFixed(2)
-          this.playPageThis.videoWidth = `${width}%`;
-          this.playPageThis.videoPosition = FlexAlign.Center;
+          this.playerThis.videoWidth = `${width}%`;
         }
         break;
       case "stretch": // 视频拉伸至与窗口等大。
         this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT
       /* 这里则不分横竖屏，直接视频尺寸等于窗口尺寸*/
-        this.playPageThis.videoWidth = CommonConstants.FULL_PERCENT;
-        this.playPageThis.videoHeight = CommonConstants.FULL_PERCENT;
-        this.playPageThis.videoPosition = FlexAlign.Center;
+        this.playerThis.videoWidth = CommonConstants.FULL_PERCENT;
+        this.playerThis.videoHeight = CommonConstants.FULL_PERCENT;
         break;
       default :
       break;
@@ -477,13 +472,13 @@ export class VideoController {
    * @param time Current video playback time.
    */
   onVideoProgress(currentTime: number) {
-    console.info(`RNOH in ctrl, onVideoProgress currentTime = ${currentTime}`);
+    Logger.info(`RNOH in ctrl, onVideoProgress currentTime = ${currentTime}`);
     let sec = currentTime == 0 ? 0 : Math.floor(currentTime / 1000)
     let playableDuration = this.mVideoBufferedDuration == 0 ? 0 : this.mVideoBufferedDuration
-    console.info(`RNOH in ctrl, onVideoProgress playableDuration = ${playableDuration}`);
+    Logger.info(`RNOH in ctrl, onVideoProgress playableDuration = ${playableDuration}`);
     let seekableDuration = this.duration == 0 ? 0 : this.duration
-    console.info(`RNOH in ctrl, onVideoProgress duration = ${this.duration}`);
-    console.info(`RNOH in ctrl, onVideoProgress seekableDuration = ${seekableDuration}`);
+    Logger.info(`RNOH in ctrl, onVideoProgress duration = ${this.duration}`);
+    Logger.info(`RNOH in ctrl, onVideoProgress seekableDuration = ${seekableDuration}`);
     this.playPageThis.onVideoProgress(sec, playableDuration, seekableDuration);
   }
 
@@ -515,7 +510,7 @@ export class VideoController {
         this.playPageThis.onVideoLoad(startSecond, this.duration, this.avPlayer.width, this.avPlayer.height, orientationIn)
 
       } else {
-        console.log(`video getTrackDescription fail, error:${error}`);
+        Logger.info(`RNOH in ctrl getTrackDescription fail, error:${error}`);
       }
     });
   }
@@ -526,7 +521,7 @@ export class VideoController {
    * @param isBuffering Boolean indicating whether buffering is active
    */
   onVideoBuffer(isBuffering: boolean) {
-    console.info(`RNOH in ctrl ,onVideoBuffer out：${JSON.stringify(isBuffering)}`);
+    Logger.info(`RNOH in ctrl ,onVideoBuffer out：${JSON.stringify(isBuffering)}`);
     this.playPageThis.onVideoBuffer(isBuffering)
   }
 
@@ -534,7 +529,7 @@ export class VideoController {
    * event video onBuffering start
    */
   onVideoPlaybackStalled() {
-    console.info(`RNOH in ctrl ,onVideoPlaybackStalled`);
+    Logger.info(`RNOH in ctrl ,onVideoPlaybackStalled`);
     this.playPageThis.onVideoPlaybackStalled()
   }
 
@@ -542,7 +537,7 @@ export class VideoController {
    * event video onBuffering end
    */
   onVideoPlaybackResume() {
-    console.info(`RNOH in ctrl ,onVideoPlaybackResume`);
+    Logger.info(`RNOH in ctrl ,onVideoPlaybackResume`);
     this.playPageThis.onVideoPlaybackResume()
   }
 
@@ -605,7 +600,7 @@ export class VideoController {
    * An error is reported during network video playback.
    */
   playError(errMsg: string) {
-    console.info(`RNOH in ctrl ,onVideoError：${JSON.stringify(errMsg)}`);
+    Logger.info(`RNOH in ctrl ,onVideoError：${JSON.stringify(errMsg)}`);
     if (this.playPageThis) {
       this.playPageThis.onVideoError(errMsg)
     }

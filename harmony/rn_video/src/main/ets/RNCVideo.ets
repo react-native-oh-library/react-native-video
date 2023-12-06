@@ -36,6 +36,7 @@ import { VideoController } from './controller/VideoController';
 import { PlayConstants } from './common/constants/PlayConstants';
 
 import { CommonConstants } from './common/constants/CommonConstants';
+import Logger from './common/util/Logger';
 
 class RNCVideoSrcRequestHeaders  {
   key:string = ''
@@ -71,10 +72,7 @@ export type VideoViewDescriptor = Descriptor<'RNCVideo', RNCVideoProps>
 // export type VideoViewDescriptor = Descriptor<RNC_VIDEO_TYPE, RNCVideoProps>
 
 export interface IRNCVideo {
-  videoHeight: string
-  videoWidth: string
   videoMargin: string
-  videoPosition: FlexAlign
   onVideoLoadStart: (cUri: string) => void
   onReadyForDisplay: () => void
   onVideoProgress: (currentTime: number, _playableDuration:number, _seekableDuration:number) => void
@@ -95,10 +93,7 @@ export struct RNCVideo {
   private unregisterDescriptorChangesListener?: () => void = undefined
   private cleanupCommandCallback?: () => void = undefined
 
-  @State videoHeight: string = PlayConstants.PLAY_PAGE.PLAY_PLAYER_HEIGHT_FULL;
-  @State videoWidth: string = CommonConstants.FULL_PERCENT;
   @State videoMargin: string = PlayConstants.PLAY_PAGE.MARGIN_ZERO;
-  @State videoPosition: FlexAlign  = FlexAlign.Center;
 
   private playVideoModel: VideoController = new VideoController();
 
@@ -114,18 +109,18 @@ export struct RNCVideo {
   @Provide('disableFocusVar') disableFocus: boolean = false; /* RN侧默认是独占模式传递FALSE过来，鸿蒙默认未共享模式*/
   @Provide('preventsDisplaySleepDuringVideoPlaybackVar') preventsDisplaySleepDuringVideoPlayback: boolean = true; /* 默认true*/
 
-  @Provide status: number = CommonConstants.STATUS_START;
+  private isResume: boolean = false
 
   aboutToAppear() {
-    console.info(`RNOH in RNCVideo aboutToAppear !}`);
+    Logger.info(`RNOH in RNCVideo aboutToAppear !}`);
     this.descriptor = this.ctx.descriptorRegistry.getDescriptor<VideoViewDescriptor>(this.tag)
-    console.info(`RNOH in RNCVideo descriptor props, ${JSON.stringify(this.descriptor.props)}`);
+    Logger.info(`RNOH in RNCVideo descriptor props, ${JSON.stringify(this.descriptor.props)}`);
     this.unregisterDescriptorChangesListener = this.ctx.descriptorRegistry.subscribeToDescriptorChanges(this.tag,
       (newDescriptor) => {
         this.descriptor = (newDescriptor as VideoViewDescriptor)
         /*------ 当RN侧属性props有更改 -------*/
-        console.info(`RNOH in RNCVideo descriptor change, `);
-        console.info(`RNOH in RNCVideo newDescriptor props, ${JSON.stringify(this.descriptor.props)}`);
+        Logger.info(`RNOH in RNCVideo descriptor change, `);
+        Logger.info(`RNOH in RNCVideo newDescriptor props, ${JSON.stringify(this.descriptor.props)}`);
         this.updatePropFromDesc()
         this.preparePlayer();
       }
@@ -152,9 +147,9 @@ export struct RNCVideo {
         (command, args:(string|number)[]) => {
           if (command === 'seek') {
             //seek
-            console.log(`[RNOH]: seek,  ${JSON.stringify(args)}`)
-            console.log(`[RNOH]: seek, time: ${args[0]}`)
-            console.log(`[RNOH]: seek, tolerance: ${args[1]}`)
+            Logger.info(`RNOH in RNCVideo: seek,  ${JSON.stringify(args)}`)
+            Logger.info(`RNOH in RNCVideo: seek, time: ${args[0]}`)
+            Logger.info(`RNOH in RNCVideo: seek, tolerance: ${args[1]}`)
             this.playVideoModel.setSeekTime(Number(args[0]))
           }
         });
@@ -279,41 +274,37 @@ export struct RNCVideo {
   }
 
   async getFd(){
-    console.info(`RNOH in RNCVideo getFd, ${(this.src)}`);
+    Logger.info(`RNOH in RNCVideo getFd, ${(this.src)}`);
   }
 
   async preparePlayer() {
-    console.info(`RNOH in RNCVideo,preparePlayer src= ${(this.srcParam)}`);
+    Logger.info(`RNOH in RNCVideo,preparePlayer src= ${(this.srcParam)}`);
     if (this.srcParam.startsWith('http')) {
       this.type = CommonConstants.TYPE_INTERNET
       this.src = this.srcParam
-      console.info(`RNOH in RNCVideo startsWith, finalsrc: ${(this.src)}`);
+      Logger.info(`RNOH in RNCVideo startsWith, finalsrc: ${(this.src)}`);
     } else {
-      console.info(`RNOH in RNCVideo local, finalsrc: ${(this.src)}`);
+      Logger.info(`RNOH in RNCVideo local, finalsrc: ${(this.src)}`);
     }
   }
 
   onPageHide() {
-    this.status = CommonConstants.STATUS_PAUSE;
+    Logger.info(`RNOH in RNCVideo onPageHide.`);
     this.playVideoModel.pause();
+    this.isResume = true;
   }
 
   build() {
     RNViewBase({ ctx: this.ctx, tag: this.tag }) {
-      Stack() {
-        Column () {
-          PlayPlayer({ playVideoModel: this.playVideoModel })
-            .width(this.videoWidth)
-            .height(this.videoHeight)
-        }
-        .height(CommonConstants.FULL_PERCENT)
-        .width(CommonConstants.FULL_PERCENT)
-        .justifyContent(this.videoPosition)
-        .zIndex(0)
+      Stack({ alignContent: Alignment.Center }) {
+        PlayPlayer({ playVideoModel: this.playVideoModel })
+          .align(Alignment.Center)
+          .height(CommonConstants.FULL_PERCENT)
+          .width(CommonConstants.FULL_PERCENT)
       }
       .height(CommonConstants.FULL_PERCENT)
       .width(CommonConstants.FULL_PERCENT)
-      .backgroundColor(Color.Black)
+      // .backgroundColor(Color.Black)
     }
   }
 }
