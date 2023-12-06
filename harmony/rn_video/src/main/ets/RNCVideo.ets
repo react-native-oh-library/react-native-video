@@ -296,7 +296,7 @@ export struct RNCVideo {
 
   build() {
     RNViewBase({ ctx: this.ctx, tag: this.tag }) {
-      Stack() {
+      Stack({ alignContent: Alignment.Center }) {
         PlayPlayer({ playVideoModel: this.playVideoModel })
           .align(Alignment.Center)
           .height(CommonConstants.FULL_PERCENT)

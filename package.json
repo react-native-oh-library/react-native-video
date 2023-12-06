@@ -1,5 +1,5 @@
 {
-    "name": "@react-native-oh-library/react-native-video",
+    "name": "@react-native-oh-tpl/react-native-video",
     "version": "5.2.1-0.0.5",
     "description": "A <Video /> element for react-native",
     "harmony": {
@@ -97,6 +97,7 @@
         "jsSrcDir": "src"
     },
     "publishConfig": {
-        "registry": "https://npm.pkg.github.com"
+        "registry": "https://registry.npmjs.org",
+        "access": "public"
     }
 }
