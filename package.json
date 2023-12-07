@@ -66,6 +66,7 @@
         "lib",
         "windows",
         "harmony/rn_video.har",
+        "harmony/rn_video",
         "FilterType.js",
         "DRMType.js",
         "TextTrackType.js",
