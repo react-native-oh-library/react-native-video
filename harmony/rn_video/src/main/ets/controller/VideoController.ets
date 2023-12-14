@@ -334,7 +334,7 @@ export class VideoController {
    */
   setSeekTime(value: number) {
     Logger.info(`RNOH in ctrl setSeekTime== ${JSON.stringify(value)}`);
-    this.seekTime = value;
+    this.seekTime = value*1000;
     Logger.info(`RNOH in ctrl setSeekTime== ${this.seekTime}`);
     /* seek 只能在prepared/playing/paused/complete状态调用 毫秒（ms）*/
     if (this.status === CommonConstants.STATUS_PREPARED ||
@@ -380,7 +380,7 @@ export class VideoController {
       /* 更新音频流类型 */
       this.watchStatus();
     } else {
-      Logger.info(`RNOH in ctrl, updateProp ，  ${JSON.stringify(this.avPlayer)}`);
+      Logger.info(`RNOH in ctrl, updateProp :  ${JSON.stringify(this.avPlayer)}`);
     }
 
   }
