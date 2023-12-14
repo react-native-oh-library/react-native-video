@@ -1,6 +1,6 @@
 {
     "name": "@react-native-oh-tpl/react-native-video",
-    "version": "5.2.1-0.0.5",
+    "version": "5.2.1-0.0.6",
     "description": "A <Video /> element for react-native",
     "harmony": {
         "alias": "react-native-video"
@@ -66,6 +66,7 @@
         "lib",
         "windows",
         "harmony/rn_video.har",
+        "harmony/rn_video",
         "FilterType.js",
         "DRMType.js",
         "TextTrackType.js",
