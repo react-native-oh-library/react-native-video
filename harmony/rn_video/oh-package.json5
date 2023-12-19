@@ -1,0 +1,12 @@
+{
+  "license": "ISC",
+  "types": "",
+  "devDependencies": {
+    "rnoh": "file:../rnoh"
+  },
+  "name": "rnoh-video",
+  "description": "",
+  "main": "index.ets",
+  "version": "0.0.6",
+  "dependencies": {}
+}

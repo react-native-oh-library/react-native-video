@@ -1,8 +1,15 @@
 {
-    "name": "react-native-video",
-    "version": "5.2.1",
+    "name": "@react-native-oh-tpl/react-native-video",
+    "version": "5.2.1-0.0.7",
     "description": "A <Video /> element for react-native",
-    "main": "Video.js",
+    "harmony": {
+        "alias": "react-native-video"
+    },
+    "source": "src/index",
+    "react-native": "src/index",
+    "main": "lib/commonjs/index",
+    "module": "lib/module/index",
+    "types": "lib/typescript/index.d.ts",
     "license": "MIT",
     "author": "Brent Vatne <brentvatne@gmail.com> (https://github.com/brentvatne)",
     "contributors": [
@@ -25,37 +32,64 @@
     ],
     "repository": {
         "type": "git",
-        "url": "git@github.com:react-native-community/react-native-video.git"
+        "url": "https://github.com/react-native-oh-library/react-native-video.git"
     },
     "devDependencies": {
         "@react-native-community/eslint-config": "0.0.7",
+        "@types/react": "18.0.35",
         "babel-eslint": "10.0.3",
         "eslint": "6.8.0",
-        "react": "^16.12.0",
-        "react-dom": "^16.12.0",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
         "react-hot-loader": "^4.12.19",
-        "react-native": "^0.61.5",
-        "react-native-windows": "^0.61.0-0"
+        "react-native": "^0.71.6",
+        "react-native-windows": "^0.61.0-0",
+        "react-native-builder-bob": "^0.20.4",
+        "typescript": "^4.3.5"
     },
     "dependencies": {
         "deprecated-react-native-prop-types": "^2.2.0",
         "keymirror": "^0.1.1",
         "prop-types": "^15.7.2",
-        "shaka-player": "^2.5.9"
+        "shaka-player": "^2.5.9",
+        "react-native-video": "5.2.1"
     },
     "scripts": {
+        "prepack": "bob build",
         "lint": "yarn eslint *.js"
     },
     "files": [
-        "android-exoplayer",
-        "android",
-        "dom",
-        "ios",
-        "windows",
-        "FilterType.js",
-        "DRMType.js",
-        "TextTrackType.js",
-        "VideoResizeMode.js",
-        "react-native-video.podspec"
-    ]
+        "src",
+        "lib",
+        "harmony/rn_video.har",
+        "harmony/rn_video",
+        "!android/build",
+        "!harmony/oh_modules",
+        "!harmony/**/build",
+        "!harmony/**/oh_modules",
+        "!harmony/rnoh"
+    ],
+    "react-native-builder-bob": {
+        "source": "src",
+        "output": "lib",
+        "targets": [
+            "commonjs",
+            "module",
+            [
+                "typescript",
+                {
+                    "project": "tsconfig.build.json"
+                }
+            ]
+        ]
+    },
+    "codegenConfig": {
+        "name": "RNCVideo",
+        "type": "components",
+        "jsSrcDir": "src"
+    },
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org",
+        "access": "public"
+    }
 }
