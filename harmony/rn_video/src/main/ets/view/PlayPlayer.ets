@@ -49,7 +49,7 @@ export struct PlayPlayer {
   @Consume('srcVar') @Watch("onSrcChanged") src: string;// 视频src
   @Consume index: number;
   @Consume('mutedVar')  @Watch("onMutedChanged") muted: boolean ;
-  @Consume('repeatVar') @Watch("onChanged") repeat: boolean;
+  @Consume('repeatVar') @Watch("onRepeatChange") repeat: boolean;
   @Consume('pausedVar') @Watch("onPausedChanged") paused: boolean;
   @Consume('volumeVar') @Watch("onChanged") volume: number;
   @Consume('resizeModeVar') @Watch("onChanged") resizeMode:string;
@@ -70,15 +70,13 @@ export struct PlayPlayer {
     if (this.playVideoModel) {
       this.playVideoModel.initPlayerThis(this as IPlayPlayer);
     }
-    // this.xComponentController = new XComponentController();
   }
   // @Watch cb
   onChanged(propName: string) : void {
-    Logger.info(`RNOH in Player, onChanged, ${JSON.stringify(propName)}`);
-    Logger.info(`RNOH in Player, onChanged, ${JSON.stringify(this.repeat)}`);
+    Logger.info(`RNOH in Player, onChanged,propName= ${JSON.stringify(propName)}`);
+    Logger.info(`RNOH in Player, onChanged,volume= ${JSON.stringify(this.volume)}`);
     Logger.info(`RNOH in Player, onChanged,resizeMode= ${JSON.stringify(this.resizeMode)}`);
     Logger.info(`RNOH in Player, onChanged,disableFocus= ${JSON.stringify(this.disableFocus)}`);
-    //this.playVideoModel.avPlayer.loop = this.playerThis.repeat == 1;
     if (this.playVideoModel) {
       this.playVideoModel.updateProp()
     }
@@ -89,6 +87,12 @@ export struct PlayPlayer {
     Logger.info(`RNOH in Player, onSrcChanged,propName: ${JSON.stringify(propName)}`);
     this.playVideoModel.switchVideo(this.src);
   }
+
+  onRepeatChange(propName: string) : void {
+    Logger.info(`RNOH in Player, onRepeatChange, ${JSON.stringify(this.repeat)}`);
+    this.playVideoModel.switchRepeat(this.repeat);
+  }
+
   onMutedChanged(propName: string) : void {
     Logger.info(`RNOH in Player, onMutedChanged, ${JSON.stringify(this.muted)}`);
     this.playVideoModel.switchMuted(this.muted);

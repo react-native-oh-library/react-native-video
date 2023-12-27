@@ -159,8 +159,8 @@ export class VideoController {
           break;
         case AvplayerStatus.PREPARED:
           this.avPlayer.videoScaleType = 0;
-          this.initProps()
           this.status = CommonConstants.STATUS_PREPARED;
+          this.initProps()
           this.watchStatus();
           if (this.playerThis.paused) {
             this.avPlayer.pause();
@@ -172,8 +172,6 @@ export class VideoController {
           let startSecond = (this.avPlayer.currentTime == -1 ? 0 : this.avPlayer.currentTime);
           this.onVideoLoad(startSecond);
           this.onReadyForDisplay();
-          this.avPlayer.loop = this.playerThis.repeat;
-          this.avPlayer.setVolume(this.playerThis.volume);
           this.status = CommonConstants.STATUS_START;
           this.watchStatus();
           break;
@@ -185,7 +183,8 @@ export class VideoController {
           this.duration = PlayConstants.PLAY_PLAYER.DURATION;
           this.status = CommonConstants.STATUS_COMPLETED;
           this.watchStatus();
-          this.avPlayer.reset();
+          /* 20231227 - reset重置是为切换上下一个资源，以及列表序列播放场景下对AVplayer重置，使AVplayer进入idle状态，这里不用 */
+          // this.avPlayer.reset();
           break;
         case AvplayerStatus.RELEASED:
           this.avPlayer.release();
@@ -289,8 +288,21 @@ export class VideoController {
     if (this.status === CommonConstants.STATUS_START && paused) {
       this.avPlayer.pause();
     } else {
-      // this.switchMuted(this.mMuted);
       this.avPlayer.play();
+    }
+  }
+
+  switchRepeat(repeat: boolean) {
+    this.loop = repeat
+    Logger.info(`RNOH in ctrl, switchRepeat, ${JSON.stringify(repeat)}`);
+    Logger.info(`RNOH in ctrl, switchRepeat, ${JSON.stringify(this.playerThis.repeat)}`);
+    if (this.status === CommonConstants.STATUS_PREPARED ||
+      this.status === CommonConstants.STATUS_START ||
+      this.status === CommonConstants.STATUS_PAUSE ||
+      this.status === CommonConstants.STATUS_COMPLETED
+    ) {
+      this.avPlayer.loop = this.loop;
+      Logger.info(`RNOH in ctrl, switchRepeat2, ${JSON.stringify(repeat)}`);
     }
   }
 
@@ -311,7 +323,15 @@ export class VideoController {
       }
     }
     Logger.info(`RNOH in ctrl, switchMuted, ${JSON.stringify(muted)} ,currentVolume= ${JSON.stringify(currentVolume)}`);
-    this.avPlayer.setVolume(currentVolume);
+    if (this.status === CommonConstants.STATUS_PREPARED ||
+      this.status === CommonConstants.STATUS_START ||
+      this.status === CommonConstants.STATUS_PAUSE ||
+      this.status === CommonConstants.STATUS_COMPLETED
+    ) {
+      this.avPlayer.setVolume(currentVolume);
+      Logger.info(`RNOH in ctrl, switchMuted2,currentVolume= ${JSON.stringify(currentVolume)}`);
+    }
+
     this.avPlayer.on('volumeChange', (vol: number) => {
       Logger.info('RNOH in ctrl volumeChange success,and new volume is :' + vol)
       this.avPlayer.off('volumeChange')
@@ -349,19 +369,14 @@ export class VideoController {
 
   /* 初始化播放器状态 */
   initProps() {
-    this.url = this.playerThis.src
 
     Logger.info(`RNOH in ctrl, initProps repeat, ${JSON.stringify(this.playerThis.repeat)}`);
     this.avPlayer.loop = this.playerThis.repeat;
 
+    this.mMuted = this.playerThis.muted
     this.preMutedVolume = this.playerThis.volume;
-    if (this.playerThis.muted) {
-      this.mMuted = this.playerThis.muted
-      // this.avPlayer.setVolume(0); /* 更新音量 静音*/
-    }
-    // else {
-    //   this.avPlayer.setVolume(this.playerThis.volume); /* 初始音量*/
-    // }
+    /* 更新音量 静音 -20231227 */
+    this.switchMuted(this.mMuted)
     /* 更新resizeMode */
     this.convertResizeMode(this.playerThis.resizeMode)
   }
@@ -370,8 +385,6 @@ export class VideoController {
   updateProp() {
     /* 设置 需要特定状态下设置*/
     if (this.avPlayer != null) {
-      Logger.info(`RNOH in ctrl, updateProp repeat, ${JSON.stringify(this.playerThis.repeat)}`);
-      this.avPlayer.loop = this.playerThis.repeat
       Logger.info(`RNOH in ctrl, updateProp volume, ${JSON.stringify(this.playerThis.volume)}`);
       this.avPlayer.setVolume(this.playerThis.volume); /* 更新音量 */
       Logger.info(`RNOH in ctrl, updateProp resizeMode, ${JSON.stringify(this.playerThis.resizeMode)}`);
@@ -581,8 +594,8 @@ export class VideoController {
       this.status === CommonConstants.STATUS_COMPLETED
     ){
       /* setVolume 只能在prepared/playing/paused/complete状态调用 */
-
-      this.switchMuted(this.mMuted);
+      /* 20231227 - 不重复调用静音设置，在点击变更时再设置，switchMuted */
+      // this.switchMuted(this.mMuted);
     }
 
   }
