@@ -1,0 +1,6 @@
+.idea
+.vscode
+*.tgz
+Example
+images
+docs
