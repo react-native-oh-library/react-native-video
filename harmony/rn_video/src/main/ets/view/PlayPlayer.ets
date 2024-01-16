@@ -26,6 +26,7 @@ import { VideoController } from '../controller/VideoController';
 import { CommonConstants } from '../common/constants/CommonConstants';
 import { PlayConstants } from '../common/constants/PlayConstants';
 import Logger from '../common/util/Logger';
+import Matrix4 from '@ohos.matrix4'
 
 export interface IPlayPlayer {
   src: string
@@ -41,6 +42,9 @@ export interface IPlayPlayer {
   bright: number
   videoHeight: string
   videoWidth: string
+  videoJustifyContent: FlexAlign
+  videoAlignItems: HorizontalAlign
+  matrix: Matrix4.Matrix4Transit
 }
 
 @Component
@@ -49,7 +53,7 @@ export struct PlayPlayer {
   @Consume('srcVar') @Watch("onSrcChanged") src: string;// 视频src
   @Consume index: number;
   @Consume('mutedVar')  @Watch("onMutedChanged") muted: boolean ;
-  @Consume('repeatVar') @Watch("onRepeatChange") repeat: boolean;
+  @Consume('repeatVar') @Watch("onRepeatChanged") repeat: boolean;
   @Consume('pausedVar') @Watch("onPausedChanged") paused: boolean;
   @Consume('volumeVar') @Watch("onChanged") volume: number;
   @Consume('resizeModeVar') @Watch("onChanged") resizeMode:string;
@@ -65,6 +69,12 @@ export struct PlayPlayer {
 
   @State videoHeight: string = CommonConstants.FULL_PERCENT;
   @State videoWidth: string = CommonConstants.FULL_PERCENT;
+  @State videoJustifyContent: FlexAlign = FlexAlign.Center;
+  @State videoAlignItems: HorizontalAlign = HorizontalAlign.Center;
+  @State matrix: object = Matrix4.identity();
+
+  viewWidth:number = 0
+  viewHeight:number = 0
 
   aboutToAppear() {
     if (this.playVideoModel) {
@@ -88,7 +98,7 @@ export struct PlayPlayer {
     this.playVideoModel.switchVideo(this.src);
   }
 
-  onRepeatChange(propName: string) : void {
+  onRepeatChanged(propName: string) : void {
     Logger.info(`RNOH in Player, onRepeatChange, ${JSON.stringify(this.repeat)}`);
     this.playVideoModel.switchRepeat(this.repeat);
   }
@@ -108,7 +118,7 @@ export struct PlayPlayer {
   }
 
   build() {
-    Flex({justifyContent: FlexAlign.Center,alignItems: ItemAlign.Center}) {
+    Column() {
       XComponent({
         id: PlayConstants.PLAY_PLAYER.ID,
         type: PlayConstants.PLAY_PLAYER.TYPE,
@@ -130,9 +140,11 @@ export struct PlayPlayer {
         })
         .width(this.videoWidth)
         .height(this.videoHeight)
-
+        .scale(this.matrix)
     }
-    .width(CommonConstants.FULL_PERCENT)
-    .height(CommonConstants.FULL_PERCENT)
+    .width(this.viewWidth)
+    .height(this.viewHeight)
+    .alignItems(this.videoAlignItems)
+    .justifyContent(this.videoJustifyContent)
   }
 }

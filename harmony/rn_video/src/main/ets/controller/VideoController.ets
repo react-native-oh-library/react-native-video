@@ -30,6 +30,7 @@ import { PlayConstants } from '../common/constants/PlayConstants';
 import { AudioTracksBean, VideoTracksBean } from '../common/bean/AudioTracksBean';
 import { IPlayPlayer } from '../view/PlayPlayer';
 import { IRNCVideo } from '../RNCVideo';
+import Matrix4 from '@ohos.matrix4'
 
 @Observed
 export class VideoController {
@@ -399,9 +400,18 @@ export class VideoController {
   }
 
   convertResizeMode(resizeModeB: string) {
+    this.playerThis.matrix = Matrix4.identity()
     switch (resizeModeB) {
       case "none":
+        this.playerThis.videoJustifyContent = FlexAlign.Start
+        this.playerThis.videoAlignItems = HorizontalAlign.Start
+        this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP
+        this.playerThis.videoWidth = `${px2vp(this.avPlayer.width).toFixed(2)}`
+        this.playerThis.videoHeight = `${px2vp(this.avPlayer.height).toFixed(2)}`
+        break;
       case "contain": // 保持视频宽高比，居中播放。
+        this.playerThis.videoJustifyContent = FlexAlign.Center
+        this.playerThis.videoAlignItems = HorizontalAlign.Center
         this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP
         if (this.avPlayer.height > this.avPlayer.width) { // 视频为竖屏
           this.playerThis.videoHeight = CommonConstants.FULL_PERCENT;
@@ -415,19 +425,29 @@ export class VideoController {
         }
             break;
       case "cover": // 保持视频宽高比拉伸至填满窗口，内容可能会有裁剪。
+        this.playerThis.videoJustifyContent = FlexAlign.Center
+        this.playerThis.videoAlignItems = HorizontalAlign.Center
       /* 这种模式，取视频最小的边同窗口比进行缩放，最小边填满窗口最小边 */
         this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP
         if (this.avPlayer.height > this.avPlayer.width) { // 视频为竖屏
           this.playerThis.videoWidth = CommonConstants.FULL_PERCENT; // 竖屏则宽度满屏，进行高度比例放大
           let height = (CommonConstants.ONE_HUNDRED * this.avPlayer.height / this.avPlayer.width).toFixed(2)
-          this.playerThis.videoHeight = `${height}%`;
+          // this.playerThis.videoHeight = `${height}%`;
+          this.playerThis.videoHeight = CommonConstants.FULL_PERCENT;
+          this.playerThis.matrix = Matrix4.identity()
+            .scale({x:1, y:Number.parseFloat(height)/100})
         } else {
           this.playerThis.videoHeight = CommonConstants.FULL_PERCENT; // 横屏则高度满屏，进行宽度比例放大
           let width = (CommonConstants.ONE_HUNDRED * this.avPlayer.width / this.avPlayer.height).toFixed(2)
-          this.playerThis.videoWidth = `${width}%`;
+          // this.playerThis.videoWidth = `${width}%`;
+          this.playerThis.videoWidth = CommonConstants.FULL_PERCENT;
+          this.playerThis.matrix = Matrix4.identity()
+            .scale({x:Number.parseFloat(width)/100, y:1})
         }
         break;
       case "stretch": // 视频拉伸至与窗口等大。
+        this.playerThis.videoJustifyContent = FlexAlign.Center
+        this.playerThis.videoAlignItems = HorizontalAlign.Center
         this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT
       /* 这里则不分横竖屏，直接视频尺寸等于窗口尺寸*/
         this.playerThis.videoWidth = CommonConstants.FULL_PERCENT;

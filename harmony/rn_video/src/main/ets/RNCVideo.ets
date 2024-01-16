@@ -111,10 +111,14 @@ export struct RNCVideo {
 
   private isResume: boolean = false
 
+  viewWidth:number = 0
+  viewHeight:number = 0
+
   aboutToAppear() {
     Logger.info(`RNOH in RNCVideo aboutToAppear !}`);
     this.descriptor = this.ctx.descriptorRegistry.getDescriptor<VideoViewDescriptor>(this.tag)
     Logger.info(`RNOH in RNCVideo descriptor props, ${JSON.stringify(this.descriptor.props)}`);
+    Logger.info(`RNOH in RNCVideo descriptor layoutMetrics, ${JSON.stringify(this.descriptor.layoutMetrics)}`);
     this.unregisterDescriptorChangesListener = this.ctx.descriptorRegistry.subscribeToDescriptorChanges(this.tag,
       (newDescriptor) => {
         this.descriptor = (newDescriptor as VideoViewDescriptor)
@@ -166,6 +170,8 @@ export struct RNCVideo {
     this.srcParam = this.descriptor.props.src.uri
     this.disableFocus = this.descriptor.props.disableFocus
     this.preventsDisplaySleepDuringVideoPlayback = this.descriptor.props.preventsDisplaySleepDuringVideoPlayback
+    this.viewWidth = this.descriptor.layoutMetrics.frame.size.width
+    this.viewHeight = this.descriptor.layoutMetrics.frame.size.height
   }
 
   /**
@@ -296,15 +302,10 @@ export struct RNCVideo {
 
   build() {
     RNViewBase({ ctx: this.ctx, tag: this.tag }) {
-      Stack({ alignContent: Alignment.Center }) {
-        PlayPlayer({ playVideoModel: this.playVideoModel })
-          .align(Alignment.Center)
-          .height(CommonConstants.FULL_PERCENT)
-          .width(CommonConstants.FULL_PERCENT)
-      }
-      .height(CommonConstants.FULL_PERCENT)
-      .width(CommonConstants.FULL_PERCENT)
-      // .backgroundColor(Color.Black)
+      PlayPlayer({ playVideoModel: this.playVideoModel, viewWidth: this.viewWidth, viewHeight: this.viewHeight })
+        .align(Alignment.Center)
+        .height(this.viewHeight)
+        .width(this.viewWidth)
     }
   }
 }
