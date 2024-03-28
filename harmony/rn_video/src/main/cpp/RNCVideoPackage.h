@@ -28,15 +28,32 @@
 #include "RNCVideoViewJSIBinder.h"
 #include "RNCVideoViewNapiBinder.h"
 #include "RNCVideoEventEmitRequestHandler.h"
+#include "RNOH/ArkTSComponentInstance.h"
 
 using namespace rnoh;
 using namespace facebook;
+
+class RNCVideoComponentInstanceFactoryDelegate : public ComponentInstanceFactoryDelegate {
+public:
+    using ComponentInstanceFactoryDelegate::ComponentInstanceFactoryDelegate;
+
+    ComponentInstance::Shared create(ComponentInstance::Context ctx) override {
+        if (ctx.componentName == "RNCVideo") {
+            return std::make_shared<ArkTSComponentInstance>(ctx);
+        }
+        return nullptr;
+    }
+};
 
 namespace rnoh {
 
 class RNCVideoPackage : public Package {
 public:
     RNCVideoPackage(Package::Context ctx) : Package(ctx) {}
+
+    ComponentInstanceFactoryDelegate::Shared createComponentInstanceFactoryDelegate() override {
+            return std::make_shared<RNCVideoComponentInstanceFactoryDelegate>(m_ctx);
+    }
 
     std::vector<facebook::react::ComponentDescriptorProvider> createComponentDescriptorProviders() override 
     {

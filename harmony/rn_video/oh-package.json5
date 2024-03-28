@@ -3,9 +3,9 @@
   "types": "",
   "devDependencies": {},
   "name": "rnoh-video",
-  "description": "",
+  "description": "c-api-foundation",
   "main": "index.ets",
-  "version": "5.2.1-0.2.2",
+  "version": "5.2.1-0.2.0",
   "dependencies": {
     "rnoh": "file:../rnoh"
   }
