@@ -2,10 +2,10 @@
   "license": "ISC",
   "types": "",
   "devDependencies": {},
-  "name": "rnoh-video",
+  "name": "@react-native-oh-tpl/react-native-video",
   "description": "c-api-foundation",
   "main": "index.ets",
-  "version": "5.2.1-0.2.0",
+  "version": "5.2.1-0.2.1",
   "dependencies": {
     "rnoh": "file:../rnoh"
   }
