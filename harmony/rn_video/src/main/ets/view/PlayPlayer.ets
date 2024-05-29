@@ -146,6 +146,11 @@ export struct PlayPlayer {
         .width(this.videoWidth)
         .height(this.videoHeight)
         .scale(this.matrix)
+        .onVisibleAreaChange([0.0,1.0],(isVisble:boolean,currentRatio:number)=>{
+          if(!isVisble && currentRatio <=1.0){
+            this.playVideoModel.pause()
+          }
+        })
     }
     .width(this.changedViewWidth)
     .height(this.changedviewHeight)
