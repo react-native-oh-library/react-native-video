@@ -135,10 +135,10 @@ export struct RNCVideo {
         this.updatePropFromDesc()
         this.preparePlayer();
         this.videoWidth = this.viewWidth
-        this.videoHeight = this.viewHeight
+
         if(display.getDefaultDisplaySync().orientation == 0 || display.getDefaultDisplaySync().orientation == 2){
           this.videoWidth = CommonConstants.FULL_PERCENT;
-          this.videoHeight = CommonConstants.FULL_PERCENT;
+       //   this.videoHeight = CommonConstants.FULL_PERCENT;
         }
 
 
@@ -180,6 +180,11 @@ export struct RNCVideo {
     this.muted = this.descriptor.props.muted
     this.paused = this.descriptor.props.paused
     this.resizeMode = this.descriptor.props.resizeMode
+    if(this.resizeMode === 'cover')
+    {
+      this.videoHeight = this.viewHeight
+    }
+
     this.repeat = this.descriptor.props.repeat
     this.volume = this.descriptor.props.volume
     this.srcParam = this.descriptor.props.src.uri
