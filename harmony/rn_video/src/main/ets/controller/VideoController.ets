@@ -133,7 +133,7 @@ export class VideoController {
       })
 
       this.avPlayer.on(Events.SEEK_DONE, (seekDoneTime: number) => {
-         Logger.debug(`RNOH in ctrl, seekDone success,and seek time is: ${seekDoneTime} `)
+        Logger.debug(`RNOH in ctrl, seekDone success,and seek time is: ${seekDoneTime} `)
       })
     }
     Logger.debug(`RNOH in ctrl, bindState end`);
@@ -146,56 +146,58 @@ export class VideoController {
    * @return null
    */
   onStateChange() {
-    this.avPlayer.on(Events.STATE_CHANGE, async (state) => {
-      switch (state) {
-        case AvplayerStatus.IDLE:
-          this.avPlayer.url = this.url;
-          this.onVideoLoadStart(this.url);
-          break;
-        case AvplayerStatus.INITIALIZED:
-          this.avPlayer.surfaceId = String(this.surfaceId);
-          this.avPlayer.prepare();
-          this.status = CommonConstants.STATUS_INITIALIZED;
-          this.watchStatus();
-          break;
-        case AvplayerStatus.PREPARED:
-          this.avPlayer.videoScaleType = 0;
-          this.status = CommonConstants.STATUS_PREPARED;
-          this.initProps()
-          this.watchStatus();
-          if (this.playerThis.paused) {
-            this.avPlayer.pause();
-          }else {
-            this.avPlayer.play();
-          }
-          break;
-        case AvplayerStatus.PLAYING:
-          let startSecond = (this.avPlayer.currentTime == -1 ? 0 : this.avPlayer.currentTime);
-          this.onVideoLoad(startSecond);
-          this.onReadyForDisplay();
-          this.status = CommonConstants.STATUS_START;
-          this.watchStatus();
-          break;
-        case AvplayerStatus.PAUSED:
-          this.status = CommonConstants.STATUS_PAUSE;
-          this.watchStatus();
-          break;
-        case AvplayerStatus.COMPLETED:
-          this.duration = PlayConstants.PLAY_PLAYER.DURATION;
-          this.status = CommonConstants.STATUS_COMPLETED;
-          this.watchStatus();
+    this.avPlayer?.on(Events.STATE_CHANGE, async (state) => {
+      if (this.avPlayer) {
+        switch (state) {
+          case AvplayerStatus.IDLE:
+            this.avPlayer.url = this.url;
+            this.onVideoLoadStart(this.url);
+            break;
+          case AvplayerStatus.INITIALIZED:
+            this.avPlayer.surfaceId = String(this.surfaceId);
+            this.avPlayer.prepare();
+            this.status = CommonConstants.STATUS_INITIALIZED;
+            this.watchStatus();
+            break;
+          case AvplayerStatus.PREPARED:
+            this.avPlayer.videoScaleType = 0;
+            this.status = CommonConstants.STATUS_PREPARED;
+            this.initProps()
+            this.watchStatus();
+            if (this.playerThis?.paused) {
+              this.avPlayer.pause();
+            } else {
+              this.avPlayer.play();
+            }
+            break;
+          case AvplayerStatus.PLAYING:
+            let startSecond = (this.avPlayer.currentTime == -1 ? 0 : this.avPlayer.currentTime);
+            this.onVideoLoad(startSecond);
+            this.onReadyForDisplay();
+            this.status = CommonConstants.STATUS_START;
+            this.watchStatus();
+            break;
+          case AvplayerStatus.PAUSED:
+            this.status = CommonConstants.STATUS_PAUSE;
+            this.watchStatus();
+            break;
+          case AvplayerStatus.COMPLETED:
+            this.duration = PlayConstants.PLAY_PLAYER.DURATION;
+            this.status = CommonConstants.STATUS_COMPLETED;
+            this.watchStatus();
           /* 20231227 - reset重置是为切换上下一个资源，以及列表序列播放场景下对AVplayer重置，使AVplayer进入idle状态，这里不用 */
           // this.avPlayer.reset();
-          break;
-        case AvplayerStatus.RELEASED:
-          this.avPlayer.release();
-          this.status = CommonConstants.STATUS_STOP;
-          this.watchStatus();
-          break;
-        case AvplayerStatus.STOPPED:
-          break;
-        default:
-          break;
+            break;
+          case AvplayerStatus.RELEASED:
+            this.avPlayer.release();
+            this.status = CommonConstants.STATUS_STOP;
+            this.watchStatus();
+            break;
+          case AvplayerStatus.STOPPED:
+            break;
+          default:
+            break;
+        }
       }
     });
   }
@@ -223,14 +225,14 @@ export class VideoController {
    * Release the video player.
    */
   release() {
-    this.avPlayer.release();
+    this.avPlayer?.release();
   }
 
   /**
    * Pause Playing.
    */
   pause() {
-    this.avPlayer.pause();
+    this.avPlayer?.pause();
   }
 
   /**
@@ -246,11 +248,13 @@ export class VideoController {
    * @param playSpeed Current playback speed.
    */
   setSpeed(playSpeed: number) {
-    if (CommonConstants.OPERATE_STATE.indexOf(this.avPlayer.state) === -1) {
-      return;
+    if (this.avPlayer) {
+      if (CommonConstants.OPERATE_STATE.indexOf(this.avPlayer.state) === -1) {
+        return;
+      }
+      this.playSpeed = playSpeed;
+      this.avPlayer.setSpeed(this.playSpeed);
     }
-    this.playSpeed = playSpeed;
-    this.avPlayer.setSpeed(this.playSpeed);
   }
 
   /**
@@ -258,7 +262,7 @@ export class VideoController {
    * @return
    */
   switchVideo(newUrl: string) {
-    Logger.debug(`RNOH in ctrl switchVideo,  state ${JSON.stringify(this.avPlayer.state)}`);
+    Logger.debug(`RNOH in ctrl switchVideo,  state ${JSON.stringify(this.avPlayer?.state)}`);
     this.bindState();
     Logger.debug(`RNOH in ctrl switchVideo, 100`);
     Logger.debug(`RNOH in ctrl switchVideo,  state ${JSON.stringify(this.url)},new: ${JSON.stringify(newUrl)}`);
@@ -269,24 +273,24 @@ export class VideoController {
       return;
     }
 
-    if ('idle' == (this.avPlayer.state)) {
+    if ( this.avPlayer && 'idle' == (this.avPlayer.state)) {
       Logger.debug(`RNOH in ctrl switchVideo, 201 ,${this.url}`);
       this.avPlayer.url = this.url;
     } else {
       Logger.debug(`RNOH in ctrl switchVideo, 202 ,reset`);
-      this.avPlayer.reset();
+      this.avPlayer?.reset();
       Logger.debug(`RNOH in ctrl switchVideo, 202 ,${this.url}`);
     }
     Logger.debug(`RNOH in ctrl switchVideo, 300`);
-    Logger.debug(`RNOH in ctrl switchVideo,  state11 ${JSON.stringify(this.avPlayer.state)}`);
+    Logger.debug(`RNOH in ctrl switchVideo,  state11 ${JSON.stringify(this.avPlayer?.state)}`);
   }
 
   /**
    * Switching Between Video Play and Pause.
    */
   switchPlayOrPause(paused: boolean) {
-    Logger.debug(`RNOH in ctrl switchPlayOrPause,state out= ${this.avPlayer.state};paused= ${JSON.stringify(paused)}`);
-    if (paused) {
+    Logger.debug(`RNOH in ctrl switchPlayOrPause,state out= ${this.avPlayer?.state};paused= ${JSON.stringify(paused)}`);
+    if (this.avPlayer && paused) {
       this.avPlayer.pause();
     } else {
       this.avPlayer.play();
@@ -296,11 +300,11 @@ export class VideoController {
   switchRepeat(repeat: boolean) {
     this.loop = repeat
     Logger.debug(`RNOH in ctrl, switchRepeat, ${JSON.stringify(repeat)}`);
-    Logger.debug(`RNOH in ctrl, switchRepeat, ${JSON.stringify(this.playerThis.repeat)}`);
-    if (this.status === CommonConstants.STATUS_PREPARED ||
+    Logger.debug(`RNOH in ctrl, switchRepeat, ${JSON.stringify(this.playerThis?.repeat)}`);
+    if (this.avPlayer && (this.status === CommonConstants.STATUS_PREPARED ||
       this.status === CommonConstants.STATUS_START ||
       this.status === CommonConstants.STATUS_PAUSE ||
-      this.status === CommonConstants.STATUS_COMPLETED
+      this.status === CommonConstants.STATUS_COMPLETED)
     ) {
       this.avPlayer.loop = this.loop;
       Logger.debug(`RNOH in ctrl, switchRepeat2, ${JSON.stringify(repeat)}`);
@@ -312,7 +316,7 @@ export class VideoController {
    */
   switchMuted(muted: boolean) {
     this.mMuted = muted
-    let currentVolume = this.playerThis.volume
+    let currentVolume = this.playerThis?.volume
     if (muted) {
       currentVolume = 0
     }
@@ -329,13 +333,13 @@ export class VideoController {
       this.status === CommonConstants.STATUS_PAUSE ||
       this.status === CommonConstants.STATUS_COMPLETED
     ) {
-      this.avPlayer.setVolume(currentVolume);
+      this.avPlayer?.setVolume(currentVolume);
       Logger.debug(`RNOH in ctrl, switchMuted2,currentVolume= ${JSON.stringify(currentVolume)}`);
     }
 
-    this.avPlayer.on('volumeChange', (vol: number) => {
+    this.avPlayer?.on('volumeChange', (vol: number) => {
       Logger.debug('RNOH in ctrl volumeChange success,and new volume is :' + vol)
-      this.avPlayer.off('volumeChange')
+      this.avPlayer?.off('volumeChange')
     })
   }
 
@@ -363,7 +367,7 @@ export class VideoController {
       this.status === CommonConstants.STATUS_PAUSE ||
       this.status === CommonConstants.STATUS_COMPLETED
     ) {
-      this.avPlayer.seek(this.seekTime, media.SeekMode.SEEK_CLOSEST);
+      this.avPlayer?.seek(this.seekTime, media.SeekMode.SEEK_CLOSEST);
       Logger.debug(`RNOH in ctrl avPlayer.seek`);
     }
   }
@@ -371,26 +375,28 @@ export class VideoController {
   /* 初始化播放器状态 */
   initProps() {
 
-    Logger.debug(`RNOH in ctrl, initProps repeat, ${JSON.stringify(this.playerThis.repeat)}`);
-    this.avPlayer.loop = this.playerThis.repeat;
+    Logger.debug(`RNOH in ctrl, initProps repeat, ${JSON.stringify(this.playerThis?.repeat)}`);
+    if (this.avPlayer && this.playerThis) {
+      this.avPlayer.loop = this.playerThis.repeat;
 
-    this.mMuted = this.playerThis.muted
-    this.preMutedVolume = this.playerThis.volume;
-    /* 更新音量 静音 -20231227 */
-    this.switchMuted(this.mMuted)
-    /* 更新resizeMode */
-    this.convertResizeMode(this.playerThis.resizeMode)
+      this.mMuted = this.playerThis.muted
+      this.preMutedVolume = this.playerThis.volume;
+      /* 更新音量 静音 -20231227 */
+      this.switchMuted(this.mMuted)
+      /* 更新resizeMode */
+      this.convertResizeMode(this.playerThis.resizeMode)
+    }
   }
 
   /* 更新属性 */
   updateProp() {
     /* 设置 需要特定状态下设置*/
     if (this.avPlayer != null) {
-      Logger.debug(`RNOH in ctrl, updateProp volume, ${JSON.stringify(this.playerThis.volume)}`);
-      this.avPlayer.setVolume(this.playerThis.volume); /* 更新音量 */
-      Logger.debug(`RNOH in ctrl, updateProp resizeMode, ${JSON.stringify(this.playerThis.resizeMode)}`);
+      Logger.debug(`RNOH in ctrl, updateProp volume, ${JSON.stringify(this.playerThis?.volume)}`);
+      this.avPlayer.setVolume(this.playerThis?.volume); /* 更新音量 */
+      Logger.debug(`RNOH in ctrl, updateProp resizeMode, ${JSON.stringify(this.playerThis?.resizeMode)}`);
       /* 更新 resizeMode */
-       this.convertResizeMode(this.playerThis.resizeMode)
+      this.convertResizeMode(this.playerThis?.resizeMode)
       /* 更新音频流类型 */
       this.watchStatus();
     } else {
@@ -400,61 +406,63 @@ export class VideoController {
   }
 
   convertResizeMode(resizeModeB: string) {
-    this.playerThis.matrix = Matrix4.identity()
-    switch (resizeModeB) {
-      case "none":
-        this.playerThis.videoJustifyContent = FlexAlign.Start
-        this.playerThis.videoAlignItems = HorizontalAlign.Start
-        this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP
-        this.playerThis.videoWidth = `${px2vp(this.avPlayer.width).toFixed(2)}`
-        this.playerThis.videoHeight = `${px2vp(this.avPlayer.height).toFixed(2)}`
-        break;
-      case "contain": // 保持视频宽高比，居中播放。
-        this.playerThis.videoJustifyContent = FlexAlign.Center
-        this.playerThis.videoAlignItems = HorizontalAlign.Center
-        this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP
-        if (this.avPlayer.height > this.avPlayer.width) { // 视频为竖屏
-          this.playerThis.videoHeight = CommonConstants.FULL_PERCENT;
-          let width = (CommonConstants.ONE_HUNDRED * this.avPlayer.width / this.avPlayer.height).toFixed(2)
-          this.playerThis.videoWidth = `${width}%`;
-        } else { // 视频为横屏
-          /* 这里要实现横屏满，竖向成比例，居中 */
+    if (this.avPlayer && this.playerThis) {
+      this.playerThis.matrix = Matrix4.identity()
+      switch (resizeModeB) {
+        case "none":
+          this.playerThis.videoJustifyContent = FlexAlign.Start
+          this.playerThis.videoAlignItems = HorizontalAlign.Start
+          this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP
+          this.playerThis.videoWidth = `${px2vp(this.avPlayer.width).toFixed(2)}`
+          this.playerThis.videoHeight = `${px2vp(this.avPlayer.height).toFixed(2)}`
+          break;
+        case "contain": // 保持视频宽高比，居中播放。
+          this.playerThis.videoJustifyContent = FlexAlign.Center
+          this.playerThis.videoAlignItems = HorizontalAlign.Center
+          this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP
+          if (this.avPlayer.height > this.avPlayer.width) { // 视频为竖屏
+            this.playerThis.videoHeight = CommonConstants.FULL_PERCENT;
+            let width = (CommonConstants.ONE_HUNDRED * this.avPlayer.width / this.avPlayer.height).toFixed(2)
+            this.playerThis.videoWidth = `${width}%`;
+          } else { // 视频为横屏
+            /* 这里要实现横屏满，竖向成比例，居中 */
+            this.playerThis.videoWidth = CommonConstants.FULL_PERCENT;
+            let height = (CommonConstants.ONE_HUNDRED * this.avPlayer.height / this.avPlayer.width).toFixed(2)
+            this.playerThis.videoHeight = `${height}%`;
+          }
+          break;
+        case "cover": // 保持视频宽高比拉伸至填满窗口，内容可能会有裁剪。
+          this.playerThis.videoJustifyContent = FlexAlign.Center
+          this.playerThis.videoAlignItems = HorizontalAlign.Center
+        /* 这种模式，取视频最小的边同窗口比进行缩放，最小边填满窗口最小边 */
+          this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP
+          if (this.avPlayer.height > this.avPlayer.width) { // 视频为竖屏
+            this.playerThis.videoWidth = CommonConstants.FULL_PERCENT; // 竖屏则宽度满屏，进行高度比例放大
+            let height = (CommonConstants.ONE_HUNDRED * this.avPlayer.height / this.avPlayer.width).toFixed(2)
+            // this.playerThis.videoHeight = `${height}%`;
+            this.playerThis.videoHeight = CommonConstants.FULL_PERCENT;
+            this.playerThis.matrix = Matrix4.identity()
+              .scale({ x: 1, y: Number.parseFloat(height) / 100 })
+          } else {
+            this.playerThis.videoHeight = CommonConstants.FULL_PERCENT; // 横屏则高度满屏，进行宽度比例放大
+            let width = (CommonConstants.ONE_HUNDRED * this.avPlayer.width / this.avPlayer.height).toFixed(2)
+            // this.playerThis.videoWidth = `${width}%`;
+            this.playerThis.videoWidth = CommonConstants.FULL_PERCENT;
+            this.playerThis.matrix = Matrix4.identity()
+              .scale({ x: Number.parseFloat(width) / 100, y: 1 })
+          }
+          break;
+        case "stretch": // 视频拉伸至与窗口等大。
+          this.playerThis.videoJustifyContent = FlexAlign.Center
+          this.playerThis.videoAlignItems = HorizontalAlign.Center
+          this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT
+        /* 这里则不分横竖屏，直接视频尺寸等于窗口尺寸*/
           this.playerThis.videoWidth = CommonConstants.FULL_PERCENT;
-          let height = (CommonConstants.ONE_HUNDRED * this.avPlayer.height / this.avPlayer.width).toFixed(2)
-          this.playerThis.videoHeight = `${height}%`;
-        }
-            break;
-      case "cover": // 保持视频宽高比拉伸至填满窗口，内容可能会有裁剪。
-        this.playerThis.videoJustifyContent = FlexAlign.Center
-        this.playerThis.videoAlignItems = HorizontalAlign.Center
-      /* 这种模式，取视频最小的边同窗口比进行缩放，最小边填满窗口最小边 */
-        this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP
-        if (this.avPlayer.height > this.avPlayer.width) { // 视频为竖屏
-          this.playerThis.videoWidth = CommonConstants.FULL_PERCENT; // 竖屏则宽度满屏，进行高度比例放大
-          let height = (CommonConstants.ONE_HUNDRED * this.avPlayer.height / this.avPlayer.width).toFixed(2)
-          // this.playerThis.videoHeight = `${height}%`;
           this.playerThis.videoHeight = CommonConstants.FULL_PERCENT;
-          this.playerThis.matrix = Matrix4.identity()
-            .scale({x:1, y:Number.parseFloat(height)/100})
-        } else {
-          this.playerThis.videoHeight = CommonConstants.FULL_PERCENT; // 横屏则高度满屏，进行宽度比例放大
-          let width = (CommonConstants.ONE_HUNDRED * this.avPlayer.width / this.avPlayer.height).toFixed(2)
-          // this.playerThis.videoWidth = `${width}%`;
-          this.playerThis.videoWidth = CommonConstants.FULL_PERCENT;
-          this.playerThis.matrix = Matrix4.identity()
-            .scale({x:Number.parseFloat(width)/100, y:1})
-        }
-        break;
-      case "stretch": // 视频拉伸至与窗口等大。
-        this.playerThis.videoJustifyContent = FlexAlign.Center
-        this.playerThis.videoAlignItems = HorizontalAlign.Center
-        this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT
-      /* 这里则不分横竖屏，直接视频尺寸等于窗口尺寸*/
-        this.playerThis.videoWidth = CommonConstants.FULL_PERCENT;
-        this.playerThis.videoHeight = CommonConstants.FULL_PERCENT;
-        break;
-      default :
-      break;
+          break;
+        default:
+          break;
+      }
     }
   }
 
@@ -485,7 +493,7 @@ export class VideoController {
    */
   onVideoLoadStart(cUri: string) {
     Logger.debug(`RNOH in ctrl, onVideoLoadStart URL: ${cUri}`);
-    this.playPageThis.onVideoLoadStart(cUri);
+    this.playPageThis?.onVideoLoadStart(cUri);
   }
 
   /**
@@ -496,7 +504,7 @@ export class VideoController {
    */
   onReadyForDisplay() {
     Logger.debug(`RNOH in ctrl, onReadyForDisplay`);
-    this.playPageThis.onReadyForDisplay();
+    this.playPageThis?.onReadyForDisplay();
   }
 
   /**
@@ -512,14 +520,14 @@ export class VideoController {
     let seekableDuration = this.duration == 0 ? 0 : this.duration
     Logger.debug(`RNOH in ctrl, onVideoProgress duration = ${this.duration}`);
     Logger.debug(`RNOH in ctrl, onVideoProgress seekableDuration = ${seekableDuration}`);
-    this.playPageThis.onVideoProgress(sec, playableDuration, seekableDuration);
+    this.playPageThis?.onVideoProgress(sec, playableDuration, seekableDuration);
   }
 
   /**
    * video completed call
    */
   onVideoEnd() {
-    this.playPageThis.onVideoEnd();
+    this.playPageThis?.onVideoEnd();
   }
 
   /**
@@ -530,22 +538,25 @@ export class VideoController {
   onVideoLoad(time: number) {
     let startSecond = time == 0 ? 0 : Math.floor(time / 1000)
     let orientationIn = "landscape" // 对标安卓 if (mp.getVideoWidth() > mp.getVideoHeight())
-    if (this.avPlayer.width > this.avPlayer.height) {
-      orientationIn = "landscape"
-    } else {
-      orientationIn = "portrait"
-    }
-
-    this.avPlayer.getTrackDescription((error, arrList) => {
-      if ((arrList) != null) {
-
-        /* 获取到音视频轨道信息后 回传*/
-        this.playPageThis.onVideoLoad(startSecond, this.duration, this.avPlayer.width, this.avPlayer.height, orientationIn)
-
+    if (this.avPlayer) {
+      if (this.avPlayer.width > this.avPlayer.height) {
+        orientationIn = "landscape"
       } else {
-        Logger.debug(`RNOH in ctrl getTrackDescription fail, error:${error}`);
+        orientationIn = "portrait"
       }
-    });
+
+      this.avPlayer.getTrackDescription((error, arrList) => {
+        if ((arrList) != null) {
+
+          /* 获取到音视频轨道信息后 回传*/
+          this.playPageThis?.onVideoLoad(startSecond, this.duration, this.avPlayer.width, this.avPlayer.height,
+            orientationIn)
+
+        } else {
+          Logger.debug(`RNOH in ctrl getTrackDescription fail, error:${error}`);
+        }
+      });
+    }
   }
 
 
@@ -555,7 +566,7 @@ export class VideoController {
    */
   onVideoBuffer(isBuffering: boolean) {
     Logger.debug(`RNOH in ctrl ,onVideoBuffer out：${JSON.stringify(isBuffering)}`);
-    this.playPageThis.onVideoBuffer(isBuffering)
+    this.playPageThis?.onVideoBuffer(isBuffering)
   }
 
   /**
@@ -563,7 +574,7 @@ export class VideoController {
    */
   onVideoPlaybackStalled() {
     Logger.debug(`RNOH in ctrl ,onVideoPlaybackStalled`);
-    this.playPageThis.onVideoPlaybackStalled()
+    this.playPageThis?.onVideoPlaybackStalled()
   }
 
   /**
@@ -571,7 +582,7 @@ export class VideoController {
    */
   onVideoPlaybackResume() {
     Logger.debug(`RNOH in ctrl ,onVideoPlaybackResume`);
-    this.playPageThis.onVideoPlaybackResume()
+    this.playPageThis?.onVideoPlaybackResume()
   }
 
   /**
@@ -597,7 +608,7 @@ export class VideoController {
 只允许在initialized状态下设置 */
     if (this.status === CommonConstants.STATUS_INITIALIZED) {
       if (this.avPlayer){
-        if (this.playerThis.disableFocus) {
+        if (this.playerThis?.disableFocus) {
           /* 设置音频流类型为视频，获取视频 音视频打断*/
           let audioRendererInfo = {
             content: audio.ContentType.CONTENT_TYPE_MOVIE,
