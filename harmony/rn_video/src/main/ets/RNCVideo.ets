@@ -91,8 +91,7 @@ export struct RNCVideo {
   ctx!: RNOHContext;
   tag: number = -1;
   @State descriptor: VideoViewDescriptor = {} as VideoViewDescriptor;
-  private unregisterDescriptorChangesListener?: () => void = undefined;
-  private cleanupCommandCallback?: () => void = undefined;
+  private callbackList:Array<() => void> = []
 
   @State videoMargin: string = PlayConstants.PLAY_PAGE.MARGIN_ZERO;
 
@@ -122,14 +121,15 @@ export struct RNCVideo {
   @Provide
   changedViewWidth: number = 0;
   @Provide
-  changedviewHeight: number = 0;
+  changedViewHeight: number = 0;
+  isUserPaused = false
 
   aboutToAppear(): void {
     Logger.debug(TAG, `aboutToAppear 修改后 !}`);
     this.descriptor = this.ctx.descriptorRegistry.getDescriptor<VideoViewDescriptor>(this.tag);
     Logger.debug(TAG, `descriptor props, ${JSON.stringify(this.descriptor.props)}`);
     Logger.debug(TAG, `descriptor layoutMetrics, ${JSON.stringify(this.descriptor.layoutMetrics)}`);
-    this.unregisterDescriptorChangesListener = this.ctx.descriptorRegistry.subscribeToDescriptorChanges(this.tag,
+    this.callbackList.push(this.ctx.descriptorRegistry.subscribeToDescriptorChanges(this.tag,
       (newDescriptor) => {
         this.descriptor = (newDescriptor as VideoViewDescriptor);
         /*------ 当RN侧属性props有更改 -------*/
@@ -144,7 +144,7 @@ export struct RNCVideo {
           // this.videoHeight = CommonConstants.FULL_PERCENT;
         }
       }
-    )
+    ))
     this.playVideoModel.initPlayPageThis(this as IRNCVideo);
     /*------ 初始化 -------*/
     this.updatePropFromDesc();
@@ -152,17 +152,35 @@ export struct RNCVideo {
 
     this.registerCommandCallback();
 
+    this.callbackList.push(this.ctx.rnInstance.subscribeToLifecycleEvents("BACKGROUND", () => {
+      if (this.paused == true) {
+        this.isUserPaused = true
+      } else {
+        this.isUserPaused = false
+        this.paused = true
+      }
+    })
+    )
+    this.callbackList.push(this.ctx.rnInstance.subscribeToLifecycleEvents("FOREGROUND", () => {
+      if (this.isUserPaused) {
+        this.paused = true
+        this.isUserPaused = false
+      } else {
+        this.paused = false
+      }
+    })
+    )
+
   }
 
   aboutToDisappear(): void {
-    this.unregisterDescriptorChangesListener?.();
-    this.cleanupCommandCallback?.();
+    this.cancellationCallback()
     this.playVideoModel.release();
   }
 
   registerCommandCallback(): void {
     if (this.ctx){
-      this.cleanupCommandCallback = this.ctx.componentCommandReceiver.registerCommandCallback(
+      this.callbackList.push(this.ctx.componentCommandReceiver.registerCommandCallback(
         this.tag,
         (command, args:(string|number)[]) => {
           if (command === RNC_VIDEO_SEEK) {
@@ -171,7 +189,7 @@ export struct RNCVideo {
             Logger.debug(TAG, `seek,  tolerance: ${args[1]}`);
             this.playVideoModel.setSeekTime(Number(args[0]));
           }
-        });
+      }))
     }
   }
 
@@ -319,6 +337,15 @@ export struct RNCVideo {
     this.isResume = true;
   }
 
+  cancellationCallback() {
+    this.callbackList.forEach(
+      callback => {
+        callback?.()
+      }
+    )
+  }
+
+
   build() {
     RNViewBase({ ctx: this.ctx, tag: this.tag }) {
       PlayPlayer({ playVideoModel: this.playVideoModel, viewWidth: this.viewWidth, viewHeight: this.viewHeight })
@@ -326,8 +353,7 @@ export struct RNCVideo {
         .height(this.viewHeight)
         .width(this.viewWidth)
         .onDisAppear(() => {
-          this.unregisterDescriptorChangesListener?.();
-          this.cleanupCommandCallback?.();
+          this.cancellationCallback()
           this.playVideoModel.release();
         })
     }

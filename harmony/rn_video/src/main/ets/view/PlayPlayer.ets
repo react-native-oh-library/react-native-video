@@ -82,7 +82,7 @@ export struct PlayPlayer {
   @Consume
   changedViewWidth: number;
   @Consume
-  changedviewHeight: number;
+  changedViewHeight: number;
 
   private orientationChange: boolean = true;
 
@@ -163,21 +163,9 @@ export struct PlayPlayer {
         .width(this.videoWidth)
         .height(this.videoHeight)
         .scale(this.matrix)
-        .onVisibleAreaChange([0.0, 1.0], (isVisble: boolean, currentRatio: number) => {
-          if (isVisble && currentRatio >= 0.7) {
-            this.playVideoModel?.switchPlayOrPause(false);
-          }
-          if (!isVisble && currentRatio <= 1.0) {
-            if (!this.orientationChange) {
-              this.orientationChange = true;
-              return
-            }
-            this.playVideoModel?.pause();
-          }
-        })
     }
     .width(this.changedViewWidth)
-    .height(this.changedviewHeight)
+    .height(this.changedViewHeight)
     .alignItems(this.videoAlignItems)
     .justifyContent(this.videoJustifyContent);
   }
