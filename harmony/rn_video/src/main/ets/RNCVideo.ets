@@ -352,10 +352,7 @@ export struct RNCVideo {
         .align(Alignment.Center)
         .height(this.viewHeight)
         .width(this.viewWidth)
-        .onDisAppear(() => {
-          this.cancellationCallback()
-          this.playVideoModel.release();
-        })
+       
     }
   }
 }
