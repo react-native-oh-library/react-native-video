@@ -25,11 +25,60 @@
 /**
  * Home constants for all features.
  */
+interface GeneratedObjectLiteralInterface_1 {
+  CURRENT_INDEX: number;
+  TAB_BAR_FIRST: number;
+  TAB_BAR_SECOND: number;
+  BAR_WIDTH: number;
+  BAR_HEIGHT: number;
+  FONT_WEIGHT_SELECT: number;
+  FONT_WEIGHT_UNSELECT: number;
+  LINE_HEIGHT: number;
+  MARGIN_TOP_TWO: number;
+  MARGIN_BOTTOM: number;
+  STROKE_WIDTH: number;
+}
+
+interface GeneratedObjectLiteralInterface_2 {
+  COLUMN_WIDTH: string;
+  LIST_SPACE: number;
+  LIST_INITIAL_INDEX: number;
+  IMAGE_HEIGHT: string;
+  IMAGE_WIDTH: string;
+  DIVIDER_STROKE_WIDTH: number;
+  LIST_ITEM_ROW_COLUMN_WIDTH: string;
+  LIST_ITEM_ROW_HEIGHT: string;
+  WIDTH: number;
+  HEIGHT: number;
+}
+
+interface GeneratedObjectLiteralInterface_3 {
+  HEIGHT: string;
+  COLUMN_HEIGHT: string;
+}
+
+interface GeneratedObjectLiteralInterface_4 {
+  OFFSET_DX: number;
+  OFFSET_DY: number;
+  GRID_COUNT: number;
+  TEXT_HEIGHT: string;
+  TEXT_MARGIN_TOP: string;
+  DURATION: number;
+  DURATION_ONE: number;
+  DURATION_TWO: number;
+}
+
+interface GeneratedObjectLiteralInterface_5 {
+  ID: string;
+  TYPE: string;
+  LIBRARY_NAME: string;
+}
+
 export class HomeConstants {
   /**
    * Constants on the tab page of the main interface.
    */
-  static readonly HOME_TAB = {
+  static readonly HOME_TAB: GeneratedObjectLiteralInterface_1 = {
     CURRENT_INDEX: 0,
     TAB_BAR_FIRST: 0,
     TAB_BAR_SECOND: 1,
@@ -46,7 +95,7 @@ export class HomeConstants {
   /**
    * Constant of the video list.
    */
-  static readonly HOME_TAB_LIST = {
+  static readonly HOME_TAB_LIST: GeneratedObjectLiteralInterface_2 = {
     COLUMN_WIDTH: '86.7%',
     LIST_SPACE: 20,
     LIST_INITIAL_INDEX: 0,
@@ -62,7 +111,7 @@ export class HomeConstants {
   /**
    * Scan local video and add network video buttons.
    */
-  static readonly HOME_TAB_BUTTON = {
+  static readonly HOME_TAB_BUTTON: GeneratedObjectLiteralInterface_3 = {
     HEIGHT: '51%',
     COLUMN_HEIGHT: '10%'
   }
@@ -70,7 +119,7 @@ export class HomeConstants {
   /**
    * Add Network Video dialog box.
    */
-  static readonly INTERNET_ADD_DIALOG= {
+  static readonly INTERNET_ADD_DIALOG: GeneratedObjectLiteralInterface_4= {
     OFFSET_DX: 0,
     OFFSET_DY: -20,
     GRID_COUNT: 4,
@@ -84,7 +133,7 @@ export class HomeConstants {
   /**
    * The video player is used to verify the video link.
    */
-  static readonly X_COMPONENT = {
+  static readonly X_COMPONENT: GeneratedObjectLiteralInterface_5 = {
     ID: '',
     TYPE: 'surface',
     LIBRARY_NAME: '',

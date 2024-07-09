@@ -72,6 +72,8 @@ const RNC_VIDEO_SEEK:string = 'seek'
 
 export interface IRNCVideo {
   videoMargin: string
+  viewWidth: number
+  viewHeight: number
   onVideoLoadStart: (cUri: string) => void
   onReadyForDisplay: () => void
   onVideoProgress: (currentTime: number, _playableDuration:number, _seekableDuration:number) => void
@@ -206,7 +208,7 @@ export struct RNCVideo {
     this.viewWidth = this.descriptor.layoutMetrics.frame.size.width
     this.viewHeight = this.descriptor.layoutMetrics.frame.size.height
     this.changedViewWidth = this.viewWidth
-    this.changedviewHeight = this.viewHeight
+    this.changedViewHeight = this.viewHeight
     if(this.resizeMode === ResizeMode.COVER) {
       this.videoHeight = this.viewHeight
     }
