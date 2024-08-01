@@ -408,8 +408,6 @@ export class VideoController {
     this.playerThis.videoAlignItems = HorizontalAlign.Center;
     this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP;
     this.playerThis.matrix = Matrix4.identity();
-    const orientation = display.getDefaultDisplaySync().orientation
-    const videoAspectRatio = this.avPlayer.width / this.avPlayer.height
     switch (resizeModeB) {
       case ResizeMode.NONE:
         this.playerThis.videoJustifyContent = FlexAlign.Start;
@@ -419,17 +417,30 @@ export class VideoController {
         break;
       case ResizeMode.CONTAIN:
         // 视频为竖屏和反向竖屏
-        if (orientation === display.Orientation.PORTRAIT || orientation === display.Orientation.PORTRAIT_INVERTED) {
-          this.playerThis.videoWidth = `${this.playPageThis.viewWidth}`;
-          this.playerThis.videoHeight  = `${this.playPageThis.viewWidth / videoAspectRatio}`;
+        this.playerThis.videoJustifyContent = FlexAlign.Center;
+        this.playerThis.videoAlignItems = HorizontalAlign.Center;
+        this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP;
+        const videoAspectRatio = this.avPlayer.width / this.avPlayer.height
+        const viewWidth = this.playPageThis.viewWidth
+        const viewHeight = this.playPageThis.viewHeight
+        const playerWidth = this.avPlayer.width
+        const playerHeight = this.avPlayer.height
+        const widthDifference = viewWidth - playerWidth
+        const heihgtDifference = viewHeight - playerHeight
+        if (widthDifference < heihgtDifference) {
+          this.playerThis.videoWidth = `${viewWidth}`;
+          this.playerThis.videoHeight  = `${viewWidth / videoAspectRatio}`;
         } else { // 视频为横屏或者反横屏
-          this.playerThis.videoHeight = `${this.playPageThis.viewHeight}`;
-          this.playerThis.videoWidth = `${this.playPageThis.viewHeight * videoAspectRatio}`;
+          this.playerThis.videoHeight = `${viewHeight}`;
+          this.playerThis.videoWidth = `${viewHeight * videoAspectRatio}`;
         }
         break;
       case ResizeMode.COVER: // 保持视频宽高比拉伸至填满窗口，内容可能会有裁剪。
+        this.playerThis.videoJustifyContent = FlexAlign.Center;
+        this.playerThis.videoAlignItems = HorizontalAlign.Center;
       /* 这种模式，取视频最小的边同窗口比进行缩放，最小边填满窗口最小边 */
-        if (orientation === display.Orientation.PORTRAIT || orientation === display.Orientation.PORTRAIT_INVERTED) { // 视频为竖屏
+        this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP;
+        if (this.avPlayer.height > this.avPlayer.width) { // 视频为竖屏
           this.playerThis.videoWidth = CommonConstants.FULL_PERCENT; // 竖屏则宽度满屏，进行高度比例放大
           let height = (CommonConstants.ONE_HUNDRED * this.avPlayer.height / this.avPlayer.width).toFixed(2);
           this.playerThis.videoHeight = CommonConstants.FULL_PERCENT;
