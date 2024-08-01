@@ -36,6 +36,19 @@ import { CommonConstants, ResizeMode } from './common/constants/CommonConstants'
 import Logger from './common/util/Logger';
 import { display } from '@kit.ArkUI';
 
+import observer from '@ohos.arkui.observer';
+import { UIContext } from '@ohos.arkui.UIContext';
+function callBackFunc(info: observer.RouterPageInfo) {}
+
+
+interface NavDestinationState {
+  navigationId: string
+  name: string
+  state: number
+  index:number
+  param:string
+}
+
 class RNCVideoSrcRequestHeaders  {
   key:string = ''
   value:string =''
@@ -151,33 +164,39 @@ export struct RNCVideo {
     /*------ 初始化 -------*/
     this.updatePropFromDesc();
     this.preparePlayer();
-
     this.registerCommandCallback();
 
-    this.callbackList.push(this.ctx.rnInstance.subscribeToLifecycleEvents("BACKGROUND", () => {
-      if (this.paused == true) {
-        this.isUserPaused = true
-      } else {
-        this.isUserPaused = false
-        this.paused = true
+    observer.on('navDestinationUpdate', (info) => {
+      let navDestinationInfo = JSON.stringify(info)
+      let navDestinationState = JSON.parse(navDestinationInfo) as NavDestinationState
+      let state = navDestinationState.state
+      let index = navDestinationState.index
+      //index 是 Navigation 的页面值  video 当前的页面 == 1, state表示当前页面的状态,ON_HIDDEN 为页面隐藏,ON_SHOWN为页面显示
+      if(index == 1 && state == observer.NavDestinationState.ON_HIDDEN){
+        if (this.paused == true) {
+          this.isUserPaused = true
+        } else {
+          this.isUserPaused = false
+          this.paused = true
+        }
       }
-    })
-    )
-    this.callbackList.push(this.ctx.rnInstance.subscribeToLifecycleEvents("FOREGROUND", () => {
-      if (this.isUserPaused) {
-        this.paused = true
-        this.isUserPaused = false
-      } else {
-        this.paused = false
+      if(index == 1 && state == observer.NavDestinationState.ON_SHOWN){
+        if(this.isUserPaused == true){
+          this.paused = true
+        }else {
+          this.paused = false
+          this.isUserPaused = false
+        }
+
       }
-    })
-    )
+    });
 
   }
 
   aboutToDisappear(): void {
     this.cancellationCallback()
     this.playVideoModel.release();
+    observer.off('navDestinationUpdate');
   }
 
   registerCommandCallback(): void {
@@ -358,7 +377,6 @@ export struct RNCVideo {
         .align(Alignment.Center)
         .height(this.viewHeight)
         .width(this.viewWidth)
-       
     }
   }
 }
