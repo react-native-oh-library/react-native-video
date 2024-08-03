@@ -35,7 +35,7 @@ import { PlayConstants } from './common/constants/PlayConstants';
 import { CommonConstants, ResizeMode } from './common/constants/CommonConstants';
 import Logger from './common/util/Logger';
 import { display } from '@kit.ArkUI';
-
+import fs from '@ohos.file.fs';
 import observer from '@ohos.arkui.observer';
 import { UIContext } from '@ohos.arkui.UIContext';
 function callBackFunc(info: observer.RouterPageInfo) {}
@@ -107,7 +107,6 @@ export struct RNCVideo {
   tag: number = -1;
   @State descriptor: VideoViewDescriptor = {} as VideoViewDescriptor;
   private callbackList:Array<() => void> = []
-
   @State videoMargin: string = PlayConstants.PLAY_PAGE.MARGIN_ZERO;
 
   private playVideoModel: VideoController = new VideoController();
@@ -342,15 +341,16 @@ export struct RNCVideo {
   }
 
   async preparePlayer(): Promise<void> {
-    Logger.debug(TAG, `preparePlayer src= ${(this.srcParam)}`);
     if (this.srcParam.startsWith('http')) {
       this.type = CommonConstants.TYPE_INTERNET
       this.src = this.srcParam
-      Logger.debug(TAG, `startsWith, finalsrc: ${(this.src)}`);
     } else if(this.srcParam.startsWith('asset')) {
       const fileUrl = this.srcParam.split('//')[1];
       let fileDescriptor = await getContext(this).resourceManager.getRawFd(`assets/${fileUrl}`);
       this.src = fileDescriptor;
+    } else if (this.srcParam.startsWith('file:')){
+      let resFile = fs.openSync(this.srcParam, fs.OpenMode.READ_ONLY)
+      this.src = `fd://${resFile.fd}`;
     } else {
       Logger.debug(TAG, `local, finalsrc: ${(this.src)}`);
     }
