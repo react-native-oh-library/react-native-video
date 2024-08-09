@@ -165,26 +165,33 @@ export struct RNCVideo {
     this.preparePlayer();
     this.registerCommandCallback();
 
+    this.callbackList.push(this.ctx.rnInstance.subscribeToLifecycleEvents("BACKGROUND", () => {
+       this.paused = true
+    })
+    )
+    this.callbackList.push(this.ctx.rnInstance.subscribeToLifecycleEvents("FOREGROUND", () => {
+      if (this.isUserPaused) {
+        this.paused = true
+        } else {
+        this.paused = false
+      }
+    })
+    )
+
     observer.on('navDestinationUpdate', (info) => {
       let navDestinationInfo = JSON.stringify(info)
       let navDestinationState = JSON.parse(navDestinationInfo) as NavDestinationState
       let state = navDestinationState.state
       let index = navDestinationState.index
       //index 是 Navigation 的页面值  video 当前的页面 == 1, state表示当前页面的状态,ON_HIDDEN 为页面隐藏,ON_SHOWN为页面显示
-      if(index == 1 && state == observer.NavDestinationState.ON_HIDDEN){
-        if (this.paused == true) {
-          this.isUserPaused = true
-        } else {
-          this.isUserPaused = false
+      if((index == 1 || index == 0) && state == observer.NavDestinationState.ON_HIDDEN){
           this.paused = true
-        }
       }
       if(index == 1 && state == observer.NavDestinationState.ON_SHOWN){
-        if(this.isUserPaused == true){
+        if (this.isUserPaused) {
           this.paused = true
-        }else {
+        } else {
           this.paused = false
-          this.isUserPaused = false
         }
 
       }
@@ -217,6 +224,8 @@ export struct RNCVideo {
   updatePropFromDesc(): void {
     this.muted = this.descriptor.props.muted
     this.paused = this.descriptor.props.paused
+    this.isUserPaused = this.descriptor.props.paused
+
     this.resizeMode = this.descriptor.props.resizeMode
     this.repeat = this.descriptor.props.repeat
     this.volume = this.descriptor.props.volume
