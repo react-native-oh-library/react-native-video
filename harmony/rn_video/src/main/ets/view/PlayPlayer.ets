@@ -52,7 +52,7 @@ const TAG: string = 'RNOH in ctrl'
 
 @Component
 export struct PlayPlayer {
-  private playVideoModel: VideoController = new VideoController();
+  private playVideoModel: VideoController | undefined = undefined;
   @Consume('srcVar') @Watch("onSrcChanged") src: string;// 视频src
   @Consume index: number;
   @Consume('mutedVar')  @Watch("onMutedChanged") muted: boolean ;
@@ -94,6 +94,11 @@ export struct PlayPlayer {
       this.playVideoModel.initPlayerThis(this as IPlayPlayer);
     }
   }
+  aboutToDisappear(): void {
+    if (this.playVideoModel) {
+       this.playVideoModel.release()
+    }
+  }
 
   // @Watch cb
   onChanged(propName: string) : void {
@@ -109,26 +114,36 @@ export struct PlayPlayer {
   onSrcChanged(propName: string) : void {
     Logger.debug(TAG, `onSrcChanged,srcout: ${JSON.stringify(this.src)}`);
     Logger.debug(TAG, `onSrcChanged,propName: ${JSON.stringify(propName)}`);
-    this.playVideoModel.switchVideo(this.src);
+    if (this.playVideoModel) {
+      this.playVideoModel.switchVideo(this.src);
+    }
   }
 
   onRepeatChanged(propName: string) : void {
     Logger.debug(TAG, `onRepeatChange, ${JSON.stringify(this.repeat)}`);
-    this.playVideoModel.switchRepeat(this.repeat);
+    if (this.playVideoModel) {
+      this.playVideoModel.switchRepeat(this.repeat);
+    }
   }
 
   onMutedChanged(propName: string) : void {
     Logger.debug(TAG, `onMutedChanged, ${JSON.stringify(this.muted)}`);
-    this.playVideoModel.switchMuted(this.muted);
+    if (this.playVideoModel) {
+      this.playVideoModel.switchMuted(this.muted);
+    }
   }
 
   onPausedChanged(propName: string) : void {
     Logger.debug(TAG, `onPausedChanged, ${JSON.stringify(this.paused)}`);
-    this.playVideoModel.switchPlayOrPause(this.paused);
+    if (this.playVideoModel) {
+      this.playVideoModel.switchPlayOrPause(this.paused);
+    }
   }
 
   setPreventsDisplaySleepDuringVideoPlaybackModifier(propName: string) : void {
-    this.playVideoModel.setPreventsDisplaySleepDuringVideoPlaybackModifier(this.preventsDisplaySleepDuringVideoPlayback);
+    if (this.playVideoModel) {
+      this.playVideoModel.setPreventsDisplaySleepDuringVideoPlaybackModifier(this.preventsDisplaySleepDuringVideoPlayback);
+    }
   }
 
   listenScreenDirection(): void  {
@@ -153,7 +168,9 @@ export struct PlayPlayer {
             surfaceHeight: PlayConstants.PLAY_PLAYER.SURFACE_HEIGHT
           });
           this.surfaceID = Number(this.xComponentController.getXComponentSurfaceId());
-          this.playVideoModel.firstPlay(this.index, this.src, this.surfaceID);
+          if (this.playVideoModel) {
+            this.playVideoModel.firstPlay(this.index, this.src, this.surfaceID);
+          }
         })
         .width(this.videoWidth)
         .height(this.videoHeight)
