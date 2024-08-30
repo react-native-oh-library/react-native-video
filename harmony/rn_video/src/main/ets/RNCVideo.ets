@@ -187,7 +187,7 @@ export struct RNCVideo {
       if((index == 1 || index == 0) && state == observer.NavDestinationState.ON_HIDDEN){
           this.paused = true
       }
-      if(index == 1 || index == 0 && state == observer.NavDestinationState.ON_SHOWN){
+      if((index == 1 || index == 0) && state == observer.NavDestinationState.ON_SHOWN){
         if (this.isUserPaused) {
           this.paused = true
         } else {
