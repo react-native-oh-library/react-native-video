@@ -164,7 +164,7 @@ export class VideoController {
           this.onVideoLoadStart(this.url);
           break;
         case AvplayerStatus.INITIALIZED:
-          this.onVideoLoadStart(this.url);
+          this.onVideoLoadStart(JSON.stringify(this.url));
           this.avPlayer.surfaceId = String(this.surfaceId);
           this.avPlayer.prepare();
           this.status = CommonConstants.STATUS_INITIALIZED;
