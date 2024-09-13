@@ -161,7 +161,7 @@ export class VideoController {
           }else{
             this.avPlayer.fdSrc = this.url;
           }
-          this.onVideoLoadStart(this.url);
+          this.onVideoLoadStart(JSON.stringify(this.url));
           break;
         case AvplayerStatus.INITIALIZED:
           this.onVideoLoadStart(JSON.stringify(this.url));

@@ -61,6 +61,8 @@ export struct PlayPlayer {
   @Consume('volumeVar') @Watch("onChanged") volume: number;
   @Consume('resizeModeVar') @Watch("onChanged") resizeMode:string;
   @Consume('disableFocusVar') @Watch("onChanged") disableFocus: boolean;
+  @Consume @Watch("onChanged") changedViewWidth: number;
+  @Consume @Watch("onChanged") changedViewHeight: number;
   @Consume('preventsDisplaySleepDuringVideoPlaybackVar') @Watch("setPreventsDisplaySleepDuringVideoPlaybackModifier") preventsDisplaySleepDuringVideoPlayback: boolean;
 
   @State bright: number = PlayConstants.PLAY_PAGE.BRIGHT;
@@ -79,10 +81,7 @@ export struct PlayPlayer {
 
   viewWidth: number = 0;
   viewHeight: number = 0;
-  @Consume
-  changedViewWidth: number;
-  @Consume
-  changedViewHeight: number;
+
 
   private orientationChange: boolean = true;
 
