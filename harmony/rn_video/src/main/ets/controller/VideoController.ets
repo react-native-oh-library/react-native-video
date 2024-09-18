@@ -164,6 +164,13 @@ export class VideoController {
           this.onVideoLoadStart(JSON.stringify(this.url));
           break;
         case AvplayerStatus.INITIALIZED:
+          if(this.playerThis.disableFocus){
+            let audioRendererInfo = {
+              usage: audio.StreamUsage.STREAM_USAGE_GAME,
+              rendererFlags: 0
+            } as audio.AudioRendererInfo;
+            this.avPlayer.audioRendererInfo = audioRendererInfo;
+          }
           this.onVideoLoadStart(JSON.stringify(this.url));
           this.avPlayer.surfaceId = String(this.surfaceId);
           this.avPlayer.prepare();
