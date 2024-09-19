@@ -311,8 +311,6 @@ export class VideoController {
 
   switchRepeat(repeat: boolean): void {
     this.loop = repeat;
-    Logger.debug(TAG, `switchRepeat, ${JSON.stringify(repeat)}`);
-    Logger.debug(TAG, `switchRepeat, ${JSON.stringify(this.playerThis.repeat)}`);
     if (this.status === CommonConstants.STATUS_PREPARED ||
       this.status === CommonConstants.STATUS_START ||
       this.status === CommonConstants.STATUS_PAUSE ||
@@ -338,7 +336,6 @@ export class VideoController {
         currentVolume = 1.0;
       }
     }
-    Logger.debug(TAG, `switchMuted, ${JSON.stringify(muted)} ,currentVolume= ${JSON.stringify(currentVolume)}`);
     if (this.status === CommonConstants.STATUS_PREPARED ||
       this.status === CommonConstants.STATUS_START ||
       this.status === CommonConstants.STATUS_PAUSE ||
@@ -520,13 +517,9 @@ export class VideoController {
    * @param time Current video playback time.
    */
   onVideoProgress(currentTime: number): void {
-    Logger.debug(TAG, `onVideoProgress currentTime = ${currentTime}`);
     let sec = currentTime == 0 ? 0 : currentTime / 1000;
     let playableDuration = this.mVideoBufferedDuration == 0 ? 0 : this.mVideoBufferedDuration;
-    Logger.debug(TAG, `onVideoProgress playableDuration = ${playableDuration}`);
     let seekableDuration = this.duration == 0 ? 0 : this.duration;
-    Logger.debug(TAG, `onVideoProgress duration = ${this.duration}`);
-    Logger.debug(TAG, `onVideoProgress seekableDuration = ${seekableDuration}`);
     this.playPageThis.onVideoProgress(sec, playableDuration, seekableDuration);
   }
 
