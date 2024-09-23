@@ -35,11 +35,7 @@ import { PlayConstants } from './common/constants/PlayConstants';
 import { CommonConstants, ResizeMode } from './common/constants/CommonConstants';
 import Logger from './common/util/Logger';
 import { display } from '@kit.ArkUI';
-import fs from '@ohos.file.fs';
 import observer from '@ohos.arkui.observer';
-import { UIContext } from '@ohos.arkui.UIContext';
-function callBackFunc(info: observer.RouterPageInfo) {}
-
 
 interface NavDestinationState {
   navigationId: string
@@ -67,7 +63,6 @@ class RNCVideoSrc  {
 
 export interface RNCVideoProps extends ViewBaseProps {
   src: RNCVideoSrc
-  // srcType: string
   paused: boolean
   resizeMode: string
   muted: boolean
@@ -111,10 +106,8 @@ export struct RNCVideo {
 
   private playVideoModel: VideoController = new VideoController();
 
-  srcParam: string = '';/*外部传入参数src*/
-  @Provide('srcVar') src: string | media.AVFileDescriptor = '';/*最终avplayer认识的 字符串*/
+  @Provide('srcVar') srcParam: string | media.AVFileDescriptor = '';/*最终avplayer认识的 字符串*/
   @Provide index: number = 0;
-  @Provide type: number = CommonConstants.TYPE_LOCAL ;//TODO:luoxf 修改td
   @Provide('mutedVar') muted: boolean = false;
   @Provide('repeatVar') repeat: boolean = false;
   @Provide('pausedVar') paused: boolean = false;
@@ -146,7 +139,6 @@ export struct RNCVideo {
         this.descriptor = (newDescriptor as VideoViewDescriptor);
         /*------ 当RN侧属性props有更改 -------*/
         this.updatePropFromDesc();
-        this.preparePlayer();
         this.videoWidth = this.viewWidth;
 
         if(display.getDefaultDisplaySync().orientation == 0 || display.getDefaultDisplaySync().orientation == 2){
@@ -158,7 +150,6 @@ export struct RNCVideo {
     this.playVideoModel.initPlayPageThis(this as IRNCVideo);
     /*------ 初始化 -------*/
     this.updatePropFromDesc();
-    this.preparePlayer();
     this.registerCommandCallback();
 
     this.callbackList.push(this.ctx.rnInstance.subscribeToLifecycleEvents("BACKGROUND", () => {
@@ -207,9 +198,6 @@ export struct RNCVideo {
         this.tag,
         (command, args:(string|number)[]) => {
           if (command === RNC_VIDEO_SEEK) {
-            Logger.debug(TAG, `seek,  ${JSON.stringify(args)}`);
-            Logger.debug(TAG, `seek,  time: ${args[0]}`);
-            Logger.debug(TAG, `seek,  tolerance: ${args[1]}`);
             this.playVideoModel.setSeekTime(Number(args[0]));
           }
       }))
@@ -342,23 +330,7 @@ export struct RNCVideo {
   }
 
   async getFd(): Promise<void> {
-    Logger.debug(TAG, `getFd, ${(this.src)}`);
-  }
-
-  async preparePlayer(): Promise<void> {
-    if (this.srcParam.startsWith('http')) {
-      this.type = CommonConstants.TYPE_INTERNET
-      this.src = this.srcParam
-    } else if(this.srcParam.startsWith('asset')) {
-      const fileUrl = this.srcParam.split('//')[1];
-      let fileDescriptor = await getContext(this).resourceManager.getRawFd(`assets/${fileUrl}`);
-      this.src = fileDescriptor;
-    } else if (this.srcParam.startsWith('file:')){
-      let resFile = fs.openSync(this.srcParam, fs.OpenMode.READ_ONLY)
-      this.src = `fd://${resFile.fd}`;
-    } else {
-      Logger.debug(TAG, `local, finalsrc: ${(this.src)}`);
-    }
+   // Logger.debug(TAG, `getFd, ${(this.src)}`);
   }
 
   onPageHide(): void {

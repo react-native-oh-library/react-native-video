@@ -21,16 +21,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
+import media from '@ohos.multimedia.media';
 import { VideoController } from '../controller/VideoController';
 import { CommonConstants } from '../common/constants/CommonConstants';
 import { PlayConstants } from '../common/constants/PlayConstants';
 import Logger from '../common/util/Logger';
 import Matrix4 from '@ohos.matrix4'
 import mediaquery from '@ohos.mediaquery'
+import fs from '@ohos.file.fs';
 
 export interface IPlayPlayer {
-  src: string
   muted: boolean
   repeat: boolean
   paused: boolean
@@ -53,7 +53,7 @@ const TAG: string = 'RNOH in ctrl'
 @Component
 export struct PlayPlayer {
   private playVideoModel: VideoController | undefined = undefined;
-  @Consume('srcVar') @Watch("onSrcChanged") src: string;// 视频src
+  @Consume('srcVar') @Watch("onSrcChanged") srcParam: string;// 视频src
   @Consume index: number;
   @Consume('mutedVar')  @Watch("onMutedChanged") muted: boolean ;
   @Consume('repeatVar') @Watch("onRepeatChanged") repeat: boolean;
@@ -65,6 +65,7 @@ export struct PlayPlayer {
   @Consume @Watch("onChanged") changedViewHeight: number;
   @Consume('preventsDisplaySleepDuringVideoPlaybackVar') @Watch("setPreventsDisplaySleepDuringVideoPlaybackModifier") preventsDisplaySleepDuringVideoPlayback: boolean;
 
+  @Provide type: number = CommonConstants.TYPE_LOCAL ;//TODO:luoxf 修改td
   @State bright: number = PlayConstants.PLAY_PAGE.BRIGHT;
   /* 不需要显示 */
   @State volumeShow: boolean = PlayConstants.PLAY_PAGE.VOLUME_SHOW;
@@ -101,21 +102,36 @@ export struct PlayPlayer {
 
   // @Watch cb
   onChanged(propName: string) : void {
-    Logger.debug(TAG, `onChanged,propName= ${JSON.stringify(propName)}`);
-    Logger.debug(TAG, `onChanged,volume= ${JSON.stringify(this.volume)}`);
-    Logger.debug(TAG, `onChanged,resizeMode= ${JSON.stringify(this.resizeMode)}`);
-    Logger.debug(TAG, `onChanged,disableFocus= ${JSON.stringify(this.disableFocus)}`);
     if (this.playVideoModel) {
       this.playVideoModel.updateProp();
     }
   }
 
-  onSrcChanged(propName: string) : void {
-    Logger.debug(TAG, `onSrcChanged,srcout: ${JSON.stringify(this.src)}`);
-    Logger.debug(TAG, `onSrcChanged,propName: ${JSON.stringify(propName)}`);
-    if (this.playVideoModel) {
-      this.playVideoModel.switchVideo(this.src);
+  async preparePlayer(): Promise<string | media.AVFileDescriptor> {
+    let  src:string | media.AVFileDescriptor = '';
+    if (this.srcParam.startsWith('http')) {
+      this.type = CommonConstants.TYPE_INTERNET
+      src = this.srcParam
+    } else if(this.srcParam.startsWith('asset')) {
+      const fileUrl = this.srcParam.split('//')[1];
+      let fileDescriptor = await getContext(this).resourceManager.getRawFd(`assets/${fileUrl}`);
+      src = fileDescriptor;
+    } else if (this.srcParam.startsWith('file:')){
+      let resFile = fs.openSync(this.srcParam, fs.OpenMode.READ_ONLY)
+      src = `fd://${resFile.fd}`;
+    } else {
+      Logger.debug(TAG, `local, finalsrc: ${(src)}`);
     }
+    return src
+  }
+
+  onSrcChanged(propName: string) : void {
+    Logger.debug(TAG, `onSrcChanged,propName: ${JSON.stringify(propName)}`);
+    this.preparePlayer().then((src)=>{
+      if (this.playVideoModel) {
+        this.playVideoModel.switchVideo(src);
+      }
+    })
   }
 
   onRepeatChanged(propName: string) : void {
@@ -153,6 +169,8 @@ export struct PlayPlayer {
   }
 
 
+
+
   build() {
     Column() {
       XComponent({
@@ -167,9 +185,12 @@ export struct PlayPlayer {
             surfaceHeight: PlayConstants.PLAY_PLAYER.SURFACE_HEIGHT
           });
           this.surfaceID = Number(this.xComponentController.getXComponentSurfaceId());
-          if (this.playVideoModel) {
-            this.playVideoModel.firstPlay(this.index, this.src, this.surfaceID);
-          }
+          this.preparePlayer().then((src)=>{
+            if (this.playVideoModel) {
+              this.playVideoModel.firstPlay(this.index, src, this.surfaceID);
+            }
+          })
+
         })
         .width(this.videoWidth)
         .height(this.videoHeight)
