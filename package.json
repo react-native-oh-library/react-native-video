@@ -63,7 +63,6 @@
         "lib",
         "harmony/rn_video.har",
         "harmony/rn_video",
-        "!android/build",
         "!harmony/oh_modules",
         "!harmony/**/build",
         "!harmony/**/oh_modules",
