@@ -29,6 +29,7 @@ import Logger from '../common/util/Logger';
 import Matrix4 from '@ohos.matrix4'
 import mediaquery from '@ohos.mediaquery'
 import fs from '@ohos.file.fs';
+import { BusinessError } from '@kit.BasicServicesKit';
 
 export interface IPlayPlayer {
   muted: boolean
@@ -79,6 +80,7 @@ export struct PlayPlayer {
   @State videoJustifyContent: FlexAlign = FlexAlign.Center;
   @State videoAlignItems: HorizontalAlign = HorizontalAlign.Center;
   @State matrix: object = Matrix4.identity();
+  private previousSrc: fs.File | string| undefined = undefined
 
   viewWidth: number = 0;
   viewHeight: number = 0;
@@ -94,9 +96,31 @@ export struct PlayPlayer {
       this.playVideoModel.initPlayerThis(this as IPlayPlayer);
     }
   }
+
+  closeFsRawFd(){
+    if(typeof  this.previousSrc === "string") {
+      getContext(this).resourceManager.closeRawFd(this.previousSrc, (error: BusinessError) => {
+        if (error != null) {
+          Logger.debug(TAG,`aboutToDisappear, closeRawFd error is${error.message} error code:${error.code}`);
+        }else{
+          Logger.debug(TAG, `aboutToDisappear, closeRawFd file succeed`);
+        }
+      });
+    } else if(typeof  this.previousSrc === "object"){
+      fs.close(this.previousSrc, (err: BusinessError) => {
+        if (err) {
+          Logger.debug(TAG, `aboutToDisappear, close file failed with error message:${err.message},error code:${err.code}`);
+        } else {
+          Logger.debug(TAG, `aboutToDisappear, close file succeed`);
+        }
+      });
+    }
+  }
+
   aboutToDisappear(): void {
     if (this.playVideoModel) {
-       this.playVideoModel.release()
+      this.playVideoModel.release()
+      this.closeFsRawFd()
     }
   }
 
@@ -108,21 +132,27 @@ export struct PlayPlayer {
   }
 
   async preparePlayer(): Promise<string | media.AVFileDescriptor> {
-    let  src:string | media.AVFileDescriptor = '';
-    if (this.srcParam.startsWith('http')) {
-      this.type = CommonConstants.TYPE_INTERNET
-      src = this.srcParam
-    } else if(this.srcParam.startsWith('asset')) {
-      const fileUrl = this.srcParam.split('//')[1];
-      let fileDescriptor = await getContext(this).resourceManager.getRawFd(`assets/${fileUrl}`);
-      src = fileDescriptor;
-    } else if (this.srcParam.startsWith('file:')){
-      let resFile = fs.openSync(this.srcParam, fs.OpenMode.READ_ONLY)
-      src = `fd://${resFile.fd}`;
-    } else {
-      Logger.debug(TAG, `local, finalsrc: ${(src)}`);
-    }
-    return src
+    this.closeFsRawFd()
+    return new Promise(async(resolve, reject) => {
+      let  src:string | media.AVFileDescriptor = '';
+      if (this.srcParam.startsWith('http')) {
+        this.type = CommonConstants.TYPE_INTERNET
+        src = this.srcParam
+        this.previousSrc = undefined
+      } else if(this.srcParam.startsWith('asset')) {
+        const fileUrl = this.srcParam.split('//')[1];
+        let fileDescriptor = await getContext(this).resourceManager.getRawFd(`assets/${fileUrl}`);
+        this.previousSrc = `assets/${fileUrl}`
+        src = fileDescriptor;
+      } else if (this.srcParam.startsWith('file:')){
+        this.previousSrc = fs.openSync(this.srcParam, fs.OpenMode.READ_ONLY)
+        src = `fd://${this.previousSrc.fd}`;
+      } else {
+        this.previousSrc = undefined
+        Logger.debug(TAG, `local, finalsrc: ${(src)}`);
+      }
+      resolve(src)
+    })
   }
 
   onSrcChanged(propName: string) : void {
