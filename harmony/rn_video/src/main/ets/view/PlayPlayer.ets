@@ -134,24 +134,28 @@ export struct PlayPlayer {
   async preparePlayer(): Promise<string | media.AVFileDescriptor> {
     this.closeFsRawFd()
     return new Promise(async(resolve, reject) => {
-      let  src:string | media.AVFileDescriptor = '';
-      if (this.srcParam.startsWith('http')) {
-        this.type = CommonConstants.TYPE_INTERNET
-        src = this.srcParam
-        this.previousSrc = undefined
-      } else if(this.srcParam.startsWith('asset')) {
-        const fileUrl = this.srcParam.split('//')[1];
-        let fileDescriptor = await getContext(this).resourceManager.getRawFd(`assets/${fileUrl}`);
-        this.previousSrc = `assets/${fileUrl}`
-        src = fileDescriptor;
-      } else if (this.srcParam.startsWith('file:')){
-        this.previousSrc = fs.openSync(this.srcParam, fs.OpenMode.READ_ONLY)
-        src = `fd://${this.previousSrc.fd}`;
-      } else {
-        this.previousSrc = undefined
-        Logger.debug(TAG, `local, finalsrc: ${(src)}`);
+      try{
+        let  src:string | media.AVFileDescriptor = '';
+        if (this.srcParam.startsWith('http')) {
+          this.type = CommonConstants.TYPE_INTERNET
+          src = this.srcParam
+          this.previousSrc = undefined
+        } else if(this.srcParam.startsWith('asset')) {
+          const fileUrl = this.srcParam.split('//')[1];
+          let fileDescriptor = await getContext(this).resourceManager.getRawFd(`assets/${fileUrl}`);
+          this.previousSrc = `assets/${fileUrl}`
+          src = fileDescriptor;
+        } else if (this.srcParam.startsWith('file:')){
+          this.previousSrc = fs.openSync(this.srcParam, fs.OpenMode.READ_ONLY)
+          src = `fd://${this.previousSrc.fd}`;
+        } else {
+          this.previousSrc = undefined
+          Logger.debug(TAG, `local, finalsrc: ${(src)}`);
+        }
+        resolve(src)
+      } catch(error){
+        reject(error)
       }
-      resolve(src)
     })
   }
 
@@ -161,6 +165,8 @@ export struct PlayPlayer {
       if (this.playVideoModel) {
         this.playVideoModel.switchVideo(src);
       }
+    }).catch((err:BusinessError)=>{
+      Logger.debug(TAG, `onSrcChanged, preparePlayer error message:${err.message},error code:${err.code}`);
     })
   }
 
@@ -219,6 +225,8 @@ export struct PlayPlayer {
             if (this.playVideoModel) {
               this.playVideoModel.firstPlay(this.index, src, this.surfaceID);
             }
+          }).catch((err:BusinessError)=>{
+            Logger.debug(TAG, `onSrcChanged, preparePlayer error message:${err.message},error code:${err.code}`);
           })
 
         })
