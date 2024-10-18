@@ -421,23 +421,22 @@ export class VideoController {
         this.playerThis.videoHeight = `${px2vp(this.avPlayer.height).toFixed(2)}`;
         break;
       case ResizeMode.CONTAIN:
-        // 视频为竖屏和反向竖屏
         this.playerThis.videoJustifyContent = FlexAlign.Center;
         this.playerThis.videoAlignItems = HorizontalAlign.Center;
         this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP;
-        const videoAspectRatio = this.avPlayer.width / this.avPlayer.height
+
         const viewWidth = this.playPageThis.viewWidth
         const viewHeight = this.playPageThis.viewHeight
         const playerWidth = this.avPlayer.width
         const playerHeight = this.avPlayer.height
-        const widthDifference = viewWidth - playerWidth
-        const heihgtDifference = viewHeight - playerHeight
-        if (widthDifference < heihgtDifference) {
-          this.playerThis.videoWidth = `${viewWidth}`;
-          this.playerThis.videoHeight  = `${viewWidth / videoAspectRatio}`;
-        } else { // 视频为横屏或者反横屏
+        const videoRatio = playerWidth / playerHeight
+        const viewRatio = viewWidth / viewHeight
+        if (viewRatio > videoRatio) {
           this.playerThis.videoHeight = `${viewHeight}`;
-          this.playerThis.videoWidth = `${viewHeight * videoAspectRatio}`;
+          this.playerThis.videoWidth = `${viewHeight * videoRatio}`;
+        } else {
+          this.playerThis.videoWidth = `${viewWidth}`;
+          this.playerThis.videoHeight = `${viewWidth / videoRatio}`;
         }
         break;
       case ResizeMode.COVER: // 保持视频宽高比拉伸至填满窗口，内容可能会有裁剪。
