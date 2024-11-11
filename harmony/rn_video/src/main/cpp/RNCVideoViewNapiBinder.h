@@ -37,8 +37,8 @@ public:
         napi_value napiViewProps = ViewComponentNapiBinder::createProps(env, shadowView);
         auto propsObjBuilder = ArkJS(env).getObjectBuilder(napiViewProps);
         if (auto props = std::dynamic_pointer_cast<const facebook::react::RNCVideoProps>(shadowView.props)){
-        
             propsObjBuilder
+                .addProperty("controls", props->controls)
                 .addProperty("paused", props->paused)
                 .addProperty("muted", props->muted)
                 .addProperty("repeat", props->repeat)
