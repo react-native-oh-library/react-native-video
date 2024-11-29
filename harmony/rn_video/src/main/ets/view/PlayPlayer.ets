@@ -340,7 +340,22 @@ export struct PlayPlayer {
             .width(this.sliderWidth)
             .margin({ left: 5 })
             .onChange((value: number, mode: SliderChangeMode) => {
-              setTimeout(() => this.playVideoModel?.setSeekTime(value), 100);
+              let seekValue: number = value
+              if(this.repeat && value == this.duration)
+              {
+                return
+              }
+              if(this.repeat == false && value == this.duration){
+                seekValue = 0
+                this.startSecond = seekValue
+                this.playVideoModel?.setSeekTime(seekValue)
+                this.paused = true
+                return
+              }
+              // 修复循环播放时卡在最后一帧
+              setTimeout(
+                () => this.playVideoModel?.setSeekTime(seekValue)
+                , 100);
             })
 
           Text(this.formatSecondsToString(this.duration))
