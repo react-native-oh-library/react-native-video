@@ -5,7 +5,7 @@
   "name": "@react-native-oh-tpl/react-native-video",
   "description": "main cpai architecture",
   "main": "index.ets",
-  "version": "5.2.1-0.2.33",
+  "version": "5.2.1-0.2.32",
   "dependencies": {
     "@rnoh/react-native-openharmony": "file:../react_native_openharmony.har"
   }
