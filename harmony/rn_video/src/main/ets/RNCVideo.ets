@@ -126,7 +126,8 @@ export struct RNCVideo {
   changedViewWidth: number = 0;
   @Provide
   changedViewHeight: number = 0;
-  isUserPaused = false
+  @Provide
+  isUserPaused:boolean = false
   @Provide
   startSecond: number = 0
   @Provide

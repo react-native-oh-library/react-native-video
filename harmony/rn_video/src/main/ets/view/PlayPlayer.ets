@@ -93,6 +93,8 @@ export struct PlayPlayer {
   lastActiveTime: number = Date.now(); // 记录用户最后活跃时间的变量
   inactivityTimerId: number | undefined; // 定时器ID
   INACTIVITY_THRESHOLD = 5000
+  @Consume
+  isUserPaused:boolean
 
   aboutToAppear(): void {
     if (this.controls == true) {
@@ -319,6 +321,7 @@ export struct PlayPlayer {
           .height(50)
           .onClick(() => {
             this.paused = !this.paused
+            this.isUserPaused = this.paused
           })
         Row() {
           Image(this.paused ? $r('app.media.ic_play') : $r('app.media.ic_pause'))
@@ -326,6 +329,7 @@ export struct PlayPlayer {
             .height(20)
             .onClick(() => {
               this.paused = !this.paused
+              this.isUserPaused = this.paused
             })
           Text(this.formatSecondsToString(this.startSecond))
             .fontSize('10')
