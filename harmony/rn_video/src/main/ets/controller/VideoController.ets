@@ -192,9 +192,9 @@ export class VideoController {
             (this.avPlayer.currentTime == CurrentTime.CURRENTTIME_MINUS_ONE ? CurrentTime.CURRENTTIME_ZERO :
             this.avPlayer.currentTime);
           this.onVideoLoad(startSecond);
+          this.onReadyForDisplay();
           break;
         case AvplayerStatus.PLAYING:
-          this.onReadyForDisplay();
           this.status = CommonConstants.STATUS_START;
           this.watchStatus();
           break;
