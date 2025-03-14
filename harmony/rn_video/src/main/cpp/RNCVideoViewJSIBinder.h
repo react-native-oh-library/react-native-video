@@ -33,6 +33,7 @@ class RNCVideoViewJSIBinder : public ViewComponentJSIBinder{
         object.setProperty(rt, "src", "object");
 //        object.setProperty(rt, "srcType", "string");
         object.setProperty(rt, "controls", "boolean");
+        object.setProperty(rt, "fullscreen", "boolean");
         object.setProperty(rt, "paused", "boolean");
         object.setProperty(rt, "muted", "boolean");
         object.setProperty(rt, "repeat", "boolean");
@@ -61,6 +62,7 @@ class RNCVideoViewJSIBinder : public ViewComponentJSIBinder{
         events.setProperty(rt, "topPlaybackStalled", createDirectEvent(rt, "onPlaybackStalled"));
         events.setProperty(rt, "topPlaybackResume", createDirectEvent(rt, "onPlaybackResume"));
         events.setProperty(rt, "topReadyForDisplay", createDirectEvent(rt, "onReadyForDisplay"));
+        events.setProperty(rt, "topVideoFullscreenPlayerDidDismiss", createDirectEvent(rt, "onVideoFullscreenPlayerDidDismiss"));
         return events;
     }
     

@@ -39,6 +39,7 @@ public:
         if (auto props = std::dynamic_pointer_cast<const facebook::react::RNCVideoProps>(shadowView.props)){
             propsObjBuilder
                 .addProperty("controls", props->controls)
+                .addProperty("fullscreen", props->controls)
                 .addProperty("paused", props->paused)
                 .addProperty("muted", props->muted)
                 .addProperty("repeat", props->repeat)
