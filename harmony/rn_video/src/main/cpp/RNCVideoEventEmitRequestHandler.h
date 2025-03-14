@@ -44,6 +44,7 @@ enum RNCVideoEventType {
     RNC_VIDEO_PLAYBACK_STALLED = 8,
     RNC_VIDEO_PLAYBACK_RESUME = 9,
     RNC_VIDEO_READY_FOR_DISPLAY = 10,
+    RNC_VIDEO_FULLSCREEN_PLAYER_DIDDISMISS = 11,
 };
 
 RNCVideoEventType getRNCVideoEventType(ArkJS &arkJs, napi_value eventObject)
@@ -71,7 +72,10 @@ RNCVideoEventType getRNCVideoEventType(ArkJS &arkJs, napi_value eventObject)
         return RNCVideoEventType::RNC_VIDEO_PLAYBACK_RESUME;
     }else if (eventType == "onReadyForDisplay"){
         return RNCVideoEventType::RNC_VIDEO_READY_FOR_DISPLAY;
-    }else {
+    }else if (eventType == "videoFullscreenPlayerDidDismiss"){
+        return RNCVideoEventType::RNC_VIDEO_FULLSCREEN_PLAYER_DIDDISMISS;
+    }
+    else {
         throw std::runtime_error("Unknown Page event type");
     }
 }
@@ -194,6 +198,13 @@ public:
                 react::RNCVideoEventEmitter::OnReadyForDisplay event{};
                 LOG(INFO) << "RNCVideoEventEmitRequestHandler OnReadyForDisplay:" ;
                 eventEmitter->onReadyForDisplay(event);
+                break;
+            }
+             case RNCVideoEventType::RNC_VIDEO_FULLSCREEN_PLAYER_DIDDISMISS: 
+            {
+                react::RNCVideoEventEmitter::OnVideoFullscreenPlayerDidDismiss event{};
+                LOG(INFO) << "RNCVideoEventEmitRequestHandler onVideoFullscreenPlayerDidDismiss:" ;
+                eventEmitter->onVideoFullscreenPlayerDidDismiss(event);
                 break;
             }
             default:

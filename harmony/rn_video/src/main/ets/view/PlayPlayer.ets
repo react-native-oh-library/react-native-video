@@ -31,6 +31,7 @@ import mediaquery from '@ohos.mediaquery'
 import fs from '@ohos.file.fs';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { display } from '@kit.ArkUI';
+import {OverlayDialog} from './OverlayDialog'
 
 export interface IPlayPlayer {
   muted: boolean
@@ -57,6 +58,7 @@ export struct PlayPlayer {
   @Consume('srcVar') @Watch("onSrcChanged") srcParam: string; // 视频src
   @Consume index: number;
   @Consume('mutedVar') @Watch("onMutedChanged") muted: boolean;
+  @Consume('fullscreenVar') @Watch("fullscreenChanged") fullscreen: boolean;
   @Consume('repeatVar') @Watch("onRepeatChanged") repeat: boolean;
   @Consume('pausedVar') @Watch("onPausedChanged") paused: boolean;
   @Consume('controlsVar') @Watch("onControlsChanged") controls: boolean;
@@ -97,6 +99,36 @@ export struct PlayPlayer {
   private orientationChange: boolean = true;
   private isProgressSliding: boolean = false
   private sliderTimer: number = 0
+  //全屏弹窗
+  @Provide isModalVisible:boolean = true
+  @Provide startTime : number = 0
+  @State videoSrc: string = ''
+  @State videoResizeMode: string = ''
+  @Consume ('extFullscreenVar') extFullscreen: boolean;
+
+  dialogController: CustomDialogController | null = new CustomDialogController({
+    builder: OverlayDialog({
+      cancel: ()=> { this.onCancel() },
+      confirm: ()=> { this.onAccept() },
+      videoSrc: $videoSrc,
+      videoResizeMode: $videoResizeMode
+    }),
+    cancel: this.exitApp,
+    //autoCancel: true,
+    autoCancel: false,
+    onWillDismiss: (dismissDialogAction: DismissDialogAction) => {
+
+      this.extFullscreen = true
+      if (dismissDialogAction.reason != DismissReason.PRESS_BACK) {
+        this.dialogController?.close();
+      }
+    },
+    alignment: DialogAlignment.Bottom,
+    offset: { dx: 0, dy: -20 },
+    gridCount: 4,
+    customStyle: true,
+    cornerRadius: 0,
+  })
 
   aboutToAppear(): void {
     if (this.controls == true) {
@@ -205,6 +237,22 @@ export struct PlayPlayer {
       this.playVideoModel.switchMuted(this.muted);
     }
   }
+  fullscreenChanged(propName: string): void {
+    Logger.debug(TAG, `fullscreenChanged, ${JSON.stringify(this.fullscreen)}`);
+    if(this.fullscreen == true)
+    {
+      if (this.dialogController != null) {
+        this.videoSrc = this.srcParam
+        this.videoResizeMode = this.resizeMode
+        this.startTime = this.startSecond
+        this.paused = true
+        this.dialogController.open()
+        //  setTimeout((): void => this.setModalVisible(false), 5000);
+      }
+    }else {
+      this.setModalVisible(false)
+    }
+  }
 
   onPausedChanged(propName: string): void {
     Logger.debug(TAG, `onPausedChanged, ${JSON.stringify(this.paused)}`);
@@ -262,6 +310,9 @@ export struct PlayPlayer {
       this.isVisibility = Visibility.Hidden
     }
   }
+  setModalVisible(isShow: boolean){
+    this.isModalVisible = isShow
+  }
 
   resetInactivityTimer() {
     // 更新最后活跃时间，并清除（如果需要的话）然后重新设置定时器
@@ -277,8 +328,22 @@ export struct PlayPlayer {
     if (Date.now() - this.lastActiveTime >= this.INACTIVITY_THRESHOLD) {
       // contentElement.style.backgroundColor = 'gray'; // 或者使用 contentElement.style.display = 'none'; 来完全隐藏
       this.setIsVisibility(false)
-      console.log('内容已隐藏，因为5秒内没有操作。');
+
     }
+  }
+  onCancel() {
+    console.info('video_test Callback when the first button is clicked')
+
+    this.playVideoModel?.setSeekTime(this.startTime)
+    console.info('video_test startTime1 = ' + this.startTime)
+    this.startSecond = this.startTime
+    this.paused = false
+  }
+  onAccept() {
+    console.info('Callback when the second button is clicked')
+  }
+  exitApp() {
+    console.info('Click the callback in the blank area')
   }
 
   build() {
@@ -390,6 +455,21 @@ export struct PlayPlayer {
         }.width("90%")
         .height("20%")
         .alignItems(VerticalAlign.Center)
+        Row(){
+          Button('全屏')
+            .onClick(() => {
+           //   console.info('video_test ' + this.srcParam)
+              if (this.dialogController != null) {
+                this.videoSrc = this.srcParam
+                this.videoResizeMode = this.resizeMode
+                this.startTime = this.startSecond
+                this.paused = true
+                this.dialogController.open()
+              //  setTimeout((): void => this.setModalVisible(false), 5000);
+              }
+            }).visibility(Visibility.None)
+        }
+
       }
       .width('100%')
       .height('100%')
