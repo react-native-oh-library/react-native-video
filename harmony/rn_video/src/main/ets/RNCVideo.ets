@@ -200,6 +200,7 @@ export struct RNCVideo {
     this.resizeMode = this.descriptor.rawProps.resizeMode
     this.repeat = this.descriptor.rawProps.repeat !== undefined?this.descriptor.rawProps.repeat:false;
     this.volume = this.descriptor.rawProps.volume !== undefined?this.descriptor.rawProps.volume:1.0;
+    this.volume = this.muted ? 0 : this.volume;
     this.srcParam = this.descriptor.rawProps.src.uri
     this.disableFocus = this.descriptor.rawProps.disableFocus
     this.preventsDisplaySleepDuringVideoPlayback = this.descriptor.rawProps.preventsDisplaySleepDuringVideoPlayback
