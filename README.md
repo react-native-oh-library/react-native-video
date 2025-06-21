@@ -1,6 +1,6 @@
 # @react-native-oh-tpl/react-native-video
 
-This project is based on  [react-native-video](https://github.com/TheWidlarzGroup/react-native-video)
+This project is based on  [react-native-video@5.2.1](https://github.com/TheWidlarzGroup/react-native-video/tree/v5.2.1)
 
 ## Documentation
 
