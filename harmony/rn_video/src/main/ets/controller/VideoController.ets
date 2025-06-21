@@ -408,8 +408,12 @@ export class VideoController {
   updateProp(): void {
     /* 设置 需要特定状态下设置*/
     if (this.avPlayer != null) {
-      if(this.status !== CommonConstants.STATUS_INITIALIZED)
-      {
+      if(
+        this.status === CommonConstants.STATUS_PREPARED ||
+        this.status === CommonConstants.STATUS_START ||
+        this.status === CommonConstants.STATUS_PAUSE ||
+        this.status === CommonConstants.STATUS_COMPLETED
+      ){
         Logger.debug(TAG, `updateProp volume, ${JSON.stringify(this.playerThis.volume)}`);
         this.avPlayer.setVolume(this.playerThis.volume); /* 更新音量 */
         Logger.debug(TAG, `updateProp resizeMode, ${JSON.stringify(this.playerThis.resizeMode)}`);
