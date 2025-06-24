@@ -470,7 +470,7 @@ struct RNCVideoSrcRequestHeadersStruct {
 static inline void fromRawValue(const PropsParserContext &context, const RawValue &value,
                                 RNCVideoSrcRequestHeadersStruct &result)
 {
-    auto map = (butter::map<std::string, RawValue>)value;
+    auto map = (std::unordered_map<std::string, RawValue>)value;
 
     auto tmp_key = map.find("key");
     if (tmp_key != map.end()) {
@@ -511,7 +511,7 @@ struct RNCVideoSrcStruct {
 
 static inline void fromRawValue(const PropsParserContext &context, const RawValue &value, RNCVideoSrcStruct &result)
 {
-    auto map = (butter::map<std::string, RawValue>)value;
+    auto map = (std::unordered_map<std::string, RawValue>)value;
 
     auto tmp_uri = map.find("uri");
     if (tmp_uri != map.end()) {
@@ -560,7 +560,7 @@ struct RNCVideoDrmHeadersStruct {
 static inline void fromRawValue(const PropsParserContext &context, const RawValue &value,
                                 RNCVideoDrmHeadersStruct &result)
 {
-    auto map = (butter::map<std::string, RawValue>)value;
+    auto map = (std::unordered_map<std::string, RawValue>)value;
 
     auto tmp_key = map.find("key");
     if (tmp_key != map.end()) {
@@ -599,7 +599,7 @@ struct RNCVideoDrmStruct {
 
 static inline void fromRawValue(const PropsParserContext &context, const RawValue &value, RNCVideoDrmStruct &result)
 {
-    auto map = (butter::map<std::string, RawValue>)value;
+    auto map = (std::unordered_map<std::string, RawValue>)value;
 
     auto tmp_drmType = map.find("drmType");
     if (tmp_drmType != map.end()) {
@@ -642,7 +642,7 @@ struct RNCVideoBufferConfigStruct {
 static inline void fromRawValue(const PropsParserContext &context, const RawValue &value,
                                 RNCVideoBufferConfigStruct &result)
 {
-    auto map = (butter::map<std::string, RawValue>)value;
+    auto map = (std::unordered_map<std::string, RawValue>)value;
 
     auto tmp_minBufferMs = map.find("minBufferMs");
     if (tmp_minBufferMs != map.end()) {
@@ -676,7 +676,7 @@ struct RNCVideoSelectedAudioTrackStruct {
 static inline void fromRawValue(const PropsParserContext &context, const RawValue &value,
                                 RNCVideoSelectedAudioTrackStruct &result)
 {
-    auto map = (butter::map<std::string, RawValue>)value;
+    auto map = (std::unordered_map<std::string, RawValue>)value;
 
     auto tmp_selectedAudioType = map.find("selectedAudioType");
     if (tmp_selectedAudioType != map.end()) {
@@ -706,7 +706,7 @@ struct RNCVideoSelectedTextTrackStruct {
 static inline void fromRawValue(const PropsParserContext &context, const RawValue &value,
                                 RNCVideoSelectedTextTrackStruct &result)
 {
-    auto map = (butter::map<std::string, RawValue>)value;
+    auto map = (std::unordered_map<std::string, RawValue>)value;
 
     auto tmp_selectedTextType = map.find("selectedTextType");
     if (tmp_selectedTextType != map.end()) {
@@ -736,7 +736,7 @@ struct RNCVideoSelectedVideoTrackStruct {
 static inline void fromRawValue(const PropsParserContext &context, const RawValue &value,
                                 RNCVideoSelectedVideoTrackStruct &result)
 {
-    auto map = (butter::map<std::string, RawValue>)value;
+    auto map = (std::unordered_map<std::string, RawValue>)value;
 
     auto tmp_selectedVideoType = map.find("selectedVideoType");
     if (tmp_selectedVideoType != map.end()) {
@@ -767,7 +767,7 @@ struct RNCVideoTextTracksStruct {
 static inline void fromRawValue(const PropsParserContext &context, const RawValue &value,
                                 RNCVideoTextTracksStruct &result)
 {
-    auto map = (butter::map<std::string, RawValue>)value;
+    auto map = (std::unordered_map<std::string, RawValue>)value;
 
     auto tmp_title = map.find("title");
     if (tmp_title != map.end()) {
