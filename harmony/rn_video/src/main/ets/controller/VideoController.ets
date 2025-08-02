@@ -333,6 +333,14 @@ export class VideoController {
       Logger.debug(TAG, `switchRepeat2, ${JSON.stringify(repeat)}`);
     }
   }
+  handleBoundaryVolume(volume: number): number {
+    if(volume>1){
+      return 1
+    }else if(volume<0){
+      return 0
+    }
+    return volume
+  }
 
   /**
    * Switching Between Video muted and voice.
@@ -354,7 +362,7 @@ export class VideoController {
       this.status === CommonConstants.STATUS_PAUSE ||
       this.status === CommonConstants.STATUS_COMPLETED
     ) {
-      this.avPlayer.setVolume(currentVolume);
+      this.avPlayer.setVolume(handleBoundaryVolume(currentVolume));
       Logger.debug(TAG, `switchMuted2,currentVolume= ${JSON.stringify(currentVolume)}`);
     }
 
@@ -414,8 +422,14 @@ export class VideoController {
         this.status === CommonConstants.STATUS_PAUSE ||
         this.status === CommonConstants.STATUS_COMPLETED
       ){
+        let currentVolume = this.playerThis.volume
+        if(currentVolume>1){
+          currentVolume = 1
+        }else if(currentVolume<0){
+          currentVolume = 0
+        }
         Logger.debug(TAG, `updateProp volume, ${JSON.stringify(this.playerThis.volume)}`);
-        this.avPlayer.setVolume(this.playerThis.volume); /* 更新音量 */
+        this.avPlayer.setVolume(handleBoundaryVolume(this.playerThis.volume)); /* 更新音量 */
         Logger.debug(TAG, `updateProp resizeMode, ${JSON.stringify(this.playerThis.resizeMode)}`);
         /* 更新 resizeMode */
         this.convertResizeMode(this.playerThis.resizeMode);
