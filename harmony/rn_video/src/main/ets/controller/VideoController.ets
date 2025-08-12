@@ -362,7 +362,7 @@ export class VideoController {
       this.status === CommonConstants.STATUS_PAUSE ||
       this.status === CommonConstants.STATUS_COMPLETED
     ) {
-      this.avPlayer.setVolume(handleBoundaryVolume(currentVolume));
+      this.avPlayer.setVolume(this.handleBoundaryVolume(currentVolume));
       Logger.debug(TAG, `switchMuted2,currentVolume= ${JSON.stringify(currentVolume)}`);
     }
 
@@ -429,7 +429,7 @@ export class VideoController {
           currentVolume = 0
         }
         Logger.debug(TAG, `updateProp volume, ${JSON.stringify(this.playerThis.volume)}`);
-        this.avPlayer.setVolume(handleBoundaryVolume(this.playerThis.volume)); /* 更新音量 */
+        this.avPlayer.setVolume(this.handleBoundaryVolume(this.playerThis.volume)); /* 更新音量 */
         Logger.debug(TAG, `updateProp resizeMode, ${JSON.stringify(this.playerThis.resizeMode)}`);
         /* 更新 resizeMode */
         this.convertResizeMode(this.playerThis.resizeMode);
