@@ -354,7 +354,7 @@ export class VideoController {
       this.status === CommonConstants.STATUS_PAUSE ||
       this.status === CommonConstants.STATUS_COMPLETED
     ) {
-      this.avPlayer.setVolume(currentVolume);
+      this.avPlayer.setVolume(Math.max(0, Math.min(1, currentVolume)));
       Logger.debug(TAG, `switchMuted2,currentVolume= ${JSON.stringify(currentVolume)}`);
     }
 
@@ -415,7 +415,7 @@ export class VideoController {
         this.status === CommonConstants.STATUS_COMPLETED
       ){
         Logger.debug(TAG, `updateProp volume, ${JSON.stringify(this.playerThis.volume)}`);
-        this.avPlayer.setVolume(this.playerThis.volume); /* 更新音量 */
+        this.avPlayer.setVolume(Math.max(0, Math.min(1, this.playerThis.volume))); /* 更新音量 */
         Logger.debug(TAG, `updateProp resizeMode, ${JSON.stringify(this.playerThis.resizeMode)}`);
         /* 更新 resizeMode */
         this.convertResizeMode(this.playerThis.resizeMode);
