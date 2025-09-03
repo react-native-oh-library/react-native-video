@@ -32,6 +32,7 @@ import { IPlayPlayer } from '../view/PlayPlayer';
 import { IRNCVideo } from '../RNCVideo';
 import Matrix4 from '@ohos.matrix4'
 import { display } from '@kit.ArkUI';
+import { deviceInfo } from '@kit.BasicServicesKit'
 
 const TAG: string = 'RNOH in ctrl'
 
@@ -270,6 +271,32 @@ export class VideoController {
     this.loop = !this.loop;
   }
 
+  transformPlaybackSpeed(rawSpeed: number): number {
+    switch(rawSpeed){
+      case 0.75:
+        return media.PlaybackSpeed.SPEED_FORWARD_0_75_X;
+      case 1:
+        return media.PlaybackSpeed.SPEED_FORWARD_1_00_X;
+      case 1.25:
+        return media.PlaybackSpeed.SPEED_FORWARD_1_25_X;
+      case 1.75:
+        return media.PlaybackSpeed.SPEED_FORWARD_1_75_X;
+      case 2:
+        return media.PlaybackSpeed.SPEED_FORWARD_2_00_X;
+      case 0.50:
+        return media.PlaybackSpeed.SPEED_FORWARD_0_50_X;
+      case 1.5:
+        return media.PlaybackSpeed.SPEED_FORWARD_1_50_X;
+      case 3:
+        return media.PlaybackSpeed.SPEED_FORWARD_3_00_X;
+      case 0.25:
+        return media.PlaybackSpeed.SPEED_FORWARD_0_25_X;
+      case 0.125:
+        return media.PlaybackSpeed.SPEED_FORWARD_0_125_X;
+      default:
+        return media.PlaybackSpeed.SPEED_FORWARD_1_00_X;
+    }
+  }
   /**
    * Set the playback speed.
    *
@@ -278,6 +305,11 @@ export class VideoController {
   setSpeed(playSpeed: number): void {
     if (CommonConstants.OPERATE_STATE.indexOf(this.avPlayer.state) === -1) {
       return;
+    }
+    if(deviceInfo.sdkApiVersion < 20) {
+      const PlaybackSpeed = this.transformPlaybackSpeed(playSpeed)
+      this.avPlayer?.setSpeed(PlaybackSpeed);
+      return
     }
     this.playSpeed = playSpeed;
     this.avPlayer?.setSpeed(this.playSpeed);
@@ -408,6 +440,7 @@ export class VideoController {
     this.preMutedVolume = this.playerThis.volume;
     /* 更新音量 静音 -20231227 */
     this.switchMuted(this.mMuted);
+    this.setSpeed(this.playerThis.rate)
     /* 更新resizeMode */
     this.convertResizeMode(this.playerThis.resizeMode);
   }
@@ -430,6 +463,7 @@ export class VideoController {
         }
         Logger.debug(TAG, `updateProp volume, ${JSON.stringify(this.playerThis.volume)}`);
         this.avPlayer.setVolume(this.handleBoundaryVolume(this.playerThis.volume)); /* 更新音量 */
+        this.setSpeed(this.playerThis.rate)
         Logger.debug(TAG, `updateProp resizeMode, ${JSON.stringify(this.playerThis.resizeMode)}`);
         /* 更新 resizeMode */
         this.convertResizeMode(this.playerThis.resizeMode);

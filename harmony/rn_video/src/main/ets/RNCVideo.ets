@@ -66,7 +66,8 @@ export interface RNCVideoProps extends ViewBaseProps {
   repeat: boolean
   volume: number
   disableFocus: boolean
-  preventsDisplaySleepDuringVideoPlayback: boolean
+  preventsDisplaySleepDuringVideoPlayback: boolean,
+  rate: number
 }
 
 export interface AutoLayoutViewState {}
@@ -109,6 +110,7 @@ export struct RNCVideo {
   @Provide('pausedVar') paused: boolean = false;
   @Provide('resizeModeVar') resizeMode: string = "none"; /* */
   @Provide('volumeVar') volume: number = PlayConstants.PLAY_PAGE.VOLUME;
+  @Provide('rateVar') rate: number = media.PlaybackSpeed.SPEED_FORWARD_1_00_X;
   @Provide('disableFocusVar') disableFocus: boolean = false; /* RN侧默认是独占模式传递FALSE过来，鸿蒙默认未共享模式*/
   @Provide('preventsDisplaySleepDuringVideoPlaybackVar') preventsDisplaySleepDuringVideoPlayback: boolean =
     true; /* 默认true*/
@@ -197,6 +199,7 @@ export struct RNCVideo {
     this.isUserPaused = this.descriptor.rawProps.paused
     this.controls = this.descriptor.rawProps.controls
     this.fullscreen = this.descriptor.rawProps.fullscreen
+    this.rate = this.descriptor.rawProps.rate !== undefined? this.descriptor.rawProps.rate : media.PlaybackSpeed.SPEED_FORWARD_1_00_X
     this.resizeMode = this.descriptor.rawProps.resizeMode
     this.repeat = this.descriptor.rawProps.repeat !== undefined?this.descriptor.rawProps.repeat:false;
     this.volume = this.descriptor.rawProps.volume !== undefined?this.descriptor.rawProps.volume:1.0;
