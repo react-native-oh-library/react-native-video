@@ -66,7 +66,7 @@ export interface RNCVideoProps extends ViewBaseProps {
   repeat: boolean
   volume: number
   disableFocus: boolean
-  preventsDisplaySleepDuringVideoPlayback: boolean,
+  preventsDisplaySleepDuringVideoPlayback: boolean
   rate: number
 }
 
