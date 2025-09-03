@@ -38,6 +38,7 @@ export interface IPlayPlayer {
   repeat: boolean
   paused: boolean
   volume: number
+  rate: number
   resizeMode: string
   disableFocus: boolean
   preventsDisplaySleepDuringVideoPlayback: boolean
@@ -60,6 +61,7 @@ export struct PlayPlayer {
   @Consume('mutedVar') @Watch("onMutedChanged") muted: boolean;
   @Consume('fullscreenVar') @Watch("fullscreenChanged") fullscreen: boolean;
   @Consume('repeatVar') @Watch("onRepeatChanged") repeat: boolean;
+  @Consume('rateVar') @Watch("onChanged") rate: number;
   @Consume('pausedVar') @Watch("onPausedChanged") paused: boolean;
   @Consume('controlsVar') @Watch("onControlsChanged") controls: boolean;
   @Consume('volumeVar') @Watch("onChanged") volume: number;

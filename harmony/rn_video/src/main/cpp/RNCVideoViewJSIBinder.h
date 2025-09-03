@@ -38,6 +38,7 @@ class RNCVideoViewJSIBinder : public ViewComponentJSIBinder{
         object.setProperty(rt, "muted", "boolean");
         object.setProperty(rt, "repeat", "boolean");
         object.setProperty(rt, "resizeMode", "string");
+        object.setProperty(rt, "rate", "string");
         object.setProperty(rt, "volume", "string");
         object.setProperty(rt, "disableFocus", "boolean");
         object.setProperty(rt, "preventsDisplaySleepDuringVideoPlayback", "boolean");
