@@ -45,6 +45,7 @@ export class VideoController {
   private index: number = 0;
   private url: string | media.AVFileDescriptor = '';
   private surfaceId: number = 0;
+  private _surfaceIdFull: number = 0;
   private playSpeed: number = PlayConstants.PLAY_PAGE.PLAY_SPEED;
   private seekTime: number = PlayConstants.PLAY_PROGRESS.SEEK_TIME;
   private playerThis!: IPlayPlayer;
@@ -60,6 +61,15 @@ export class VideoController {
 
   constructor() {
     this.createAVPlayer();
+  }
+
+  public setSurfaceIdEx(value: number) {
+    if(value != 0) {
+      this._surfaceIdFull = value;
+      this.avPlayer.surfaceId = String(this._surfaceIdFull);
+    } else {
+      this.avPlayer.surfaceId = String(this.surfaceId);
+    }
   }
 
   /**
@@ -150,6 +160,13 @@ export class VideoController {
       })
     }
     Logger.debug(TAG, `bindState end`);
+  }
+
+  setVideoTyped(type:media.VideoScaleType) {
+    this.avPlayer.videoScaleType = type;
+  }
+  getAvPlayer(): media.AVPlayer {
+    return this.avPlayer;
   }
 
   /**

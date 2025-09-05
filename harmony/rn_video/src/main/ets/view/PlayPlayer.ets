@@ -31,7 +31,8 @@ import mediaquery from '@ohos.mediaquery'
 import fs from '@ohos.file.fs';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { display } from '@kit.ArkUI';
-import {OverlayDialog} from './OverlayDialog'
+import { OverlayDialogEx } from './OverlayDialogEx'
+import { AvplayerStatus } from '../common/constants/CommonConstants';
 
 export interface IPlayPlayer {
   muted: boolean
@@ -109,7 +110,8 @@ export struct PlayPlayer {
   @Consume ('extFullscreenVar') extFullscreen: boolean;
 
   dialogController: CustomDialogController | null = new CustomDialogController({
-    builder: OverlayDialog({
+    builder: OverlayDialogEx({
+      playVideoModel: this.playVideoModel,
       cancel: ()=> { this.onCancel() },
       confirm: ()=> { this.onAccept() },
       videoSrc: $videoSrc,
@@ -336,10 +338,9 @@ export struct PlayPlayer {
   onCancel() {
     console.info('video_test Callback when the first button is clicked')
 
-    this.playVideoModel?.setSeekTime(this.startTime)
-    console.info('video_test startTime1 = ' + this.startTime)
-    this.startSecond = this.startTime
-    this.paused = false
+    this.playVideoModel?.setSurfaceIdEx(0);
+    this.paused = this.playVideoModel?.getAvPlayer()?.state != AvplayerStatus.PLAYING
+
   }
   onAccept() {
     console.info('Callback when the second button is clicked')
@@ -465,7 +466,7 @@ export struct PlayPlayer {
                 this.videoSrc = this.srcParam
                 this.videoResizeMode = this.resizeMode
                 this.startTime = this.startSecond
-                this.paused = true
+                // this.paused = true
                 this.dialogController.open()
               //  setTimeout((): void => this.setModalVisible(false), 5000);
               }
