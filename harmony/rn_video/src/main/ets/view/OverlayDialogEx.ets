@@ -51,8 +51,8 @@ export struct OverlayDialogEx {
 
   onCurrentPlaybackTime () {
     this.currentTime = this.currentPlaybackTime;
-    if ( this.playVideoModel?.getAvPlayer())
-      this.durationTime = this.playVideoModel?.getAvPlayer().duration
+    if (this.playVideoModel)
+      this.durationTime = this.playVideoModel.getAvPlayer().duration * 0.001
   }
 
   onChanged(propName: string): void {
