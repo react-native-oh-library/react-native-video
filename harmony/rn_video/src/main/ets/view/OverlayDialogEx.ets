@@ -51,86 +51,32 @@ export struct OverlayDialogEx {
 
   onCurrentPlaybackTime () {
     this.currentTime = this.currentPlaybackTime;
-    if (this.playVideoModel)
-      this.durationTime = this.playVideoModel.getAvPlayer().duration * 0.001
+    if ( this.playVideoModel?.getAvPlayer())
+      this.durationTime = this.playVideoModel?.getAvPlayer().duration * 0.001
   }
 
-  onChanged(propName: string): void {
-      this.convertResizeMode(this.videoResizeMode)
-  }
-
-  convertResizeMode(resizeModeB: string): void {
-    let displayInfo = display.getDefaultDisplaySync();
-    let screenWidth = displayInfo.width;
-    let screenHeight = displayInfo.height;
-    this.videoJustifyContent = FlexAlign.Center;
-    this.videoAlignItems = HorizontalAlign.Center;
-    this.playVideoModel?.setVideoTyped(media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP);
-    this.matrix = Matrix4.identity();
+  getVideoPaused() {
     let avPlayer = this.playVideoModel?.getAvPlayer();
-
-
-    switch (resizeModeB) {
-      case ResizeMode.NONE:
-        this.videoJustifyContent = FlexAlign.Start;
-        this.videoAlignItems = HorizontalAlign.Start;
-        this.videoWidth = `${px2vp(avPlayer?.width).toFixed(2)}`;
-        this.videoHeight = `${px2vp(avPlayer?.height).toFixed(2)}`;
-        break;
-      case ResizeMode.CONTAIN: {
-        this.videoJustifyContent = FlexAlign.Center;
-        this.videoAlignItems = HorizontalAlign.Center;
-        this.playVideoModel?.setVideoTyped(media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP);
-        const playerWidth = avPlayer?.width
-        const playerHeight = avPlayer?.height
-        if (playerWidth && playerHeight && playerWidth != 0 && playerHeight != 0) {
-          const videoRatio = playerWidth / playerHeight
-          const viewRatio = screenWidth / screenHeight
-          if (viewRatio > videoRatio) {
-            this.videoHeight = `${screenHeight}`;
-            this.videoWidth = `${screenHeight * videoRatio}`;
-          } else {
-            this.videoWidth = `${screenWidth}`;
-            this.videoHeight = `${screenWidth / videoRatio}`;
-          }
-        }
-        break;
-      }
-      case ResizeMode.COVER: // 保持视频宽高比拉伸至填满窗口，内容可能会有裁剪。
-        this.videoJustifyContent = FlexAlign.Center;
-        this.videoAlignItems = HorizontalAlign.Center;
-        /* 这种模式，取视频最小的边同窗口比进行缩放，最小边填满窗口最小边 */
-        this.playVideoModel?.setVideoTyped(media.VideoScaleType.VIDEO_SCALE_TYPE_FIT_CROP);
-        if (avPlayer && avPlayer?.height > avPlayer.width) { // 视频为竖屏
-          this.videoWidth = CommonConstants.FULL_PERCENT; // 竖屏则宽度满屏，进行高度比例放大
-          let height = (CommonConstants.ONE_HUNDRED * avPlayer.height / avPlayer.width).toFixed(2);
-          this.videoHeight = CommonConstants.FULL_PERCENT;
-          this.matrix = Matrix4.identity()
-            .scale({ x: 1, y: Number.parseFloat(height) / 100 });
-        } else {
-          if (avPlayer) {
-            this.videoHeight = CommonConstants.FULL_PERCENT; // 横屏则高度满屏，进行宽度比例放大
-            let width = (CommonConstants.ONE_HUNDRED * avPlayer.width / avPlayer.height).toFixed(2);
-            this.videoWidth = CommonConstants.FULL_PERCENT;
-            this.matrix = Matrix4.identity()
-              .scale({ x: Number.parseFloat(width) / 100, y: 1 });
-          }
-        }
-        break;
-      case ResizeMode.STRETCH:
-        this.playVideoModel?.setVideoTyped(media.VideoScaleType.VIDEO_SCALE_TYPE_FIT);
-        /* 这里则不分横竖屏，直接视频尺寸等于窗口尺寸*/
-        this.videoWidth = CommonConstants.FULL_PERCENT;
-        this.videoHeight = CommonConstants.FULL_PERCENT;
-        this.matrix = Matrix4.identity()
-        break;
-      default:
-        break;
+    if(avPlayer) {
+      this.paused = avPlayer?.state != AvplayerStatus.PLAYING
     }
   }
-  aboutToAppear(): void {
-    console.info('video_test 弹窗拉起')
+  onChanged(propName: string): void {
+    console.error('video_test ex onChanged')
+
     this.playVideoModel?.convertResizeMode(this.videoResizeMode)
+    setTimeout(()=>{
+      this.getVideoPaused()
+    },100)
+
+  }
+
+
+  aboutToAppear(): void {
+    console.error('video_test 弹窗拉起 '+ this.videoResizeMode)
+    setTimeout(()=>{
+      this.getVideoPaused()
+    },100)
   }
   aboutToDisappear(): void {
   }
@@ -186,10 +132,7 @@ export struct OverlayDialogEx {
                 // 获取屏幕尺寸并设置XComponent尺寸以适应全屏
                 this.surfaceID = Number(this.xComponentController.getXComponentSurfaceId());
                 this.playVideoModel?.setSurfaceIdEx(this.surfaceID);
-                let avPlayer = this.playVideoModel?.getAvPlayer();
-                if(avPlayer) {
-                  this.paused = avPlayer?.state != AvplayerStatus.PLAYING
-                }
+                this.playVideoModel?.convertResizeMode(this.videoResizeMode)
               })
               .width(this.videoWidth)
               .height(this.videoHeight)
@@ -271,7 +214,7 @@ export struct OverlayDialogEx {
     }
     .backgroundColor('#000000')
     .width('100%')
-    .height('100%')
+    .height('105%')
 
     // 如果需要使用border属性或cornerRadius属性，请和borderRadius属性一起使用。
   }

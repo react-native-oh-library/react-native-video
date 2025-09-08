@@ -31,7 +31,7 @@ import mediaquery from '@ohos.mediaquery'
 import fs from '@ohos.file.fs';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { display } from '@kit.ArkUI';
-import { OverlayDialogEx } from './OverlayDialogEx'
+import {OverlayDialogEx} from './OverlayDialogEx'
 import { AvplayerStatus } from '../common/constants/CommonConstants';
 
 export interface IPlayPlayer {
@@ -115,7 +115,7 @@ export struct PlayPlayer {
       cancel: ()=> { this.onCancel() },
       confirm: ()=> { this.onAccept() },
       videoSrc: $videoSrc,
-      videoResizeMode: $videoResizeMode
+      videoResizeMode: $videoResizeMode,
     }),
     cancel: this.exitApp,
     //autoCancel: true,
@@ -249,7 +249,7 @@ export struct PlayPlayer {
         this.videoSrc = this.srcParam
         this.videoResizeMode = this.resizeMode
         this.startTime = this.startSecond
-        this.paused = true
+        this.paused = false
         this.dialogController.open()
         //  setTimeout((): void => this.setModalVisible(false), 5000);
       }
@@ -337,10 +337,9 @@ export struct PlayPlayer {
   }
   onCancel() {
     console.info('video_test Callback when the first button is clicked')
-
     this.playVideoModel?.setSurfaceIdEx(0);
     this.paused = this.playVideoModel?.getAvPlayer()?.state != AvplayerStatus.PLAYING
-
+    this.playVideoModel?.convertResizeMode(this.resizeMode);
   }
   onAccept() {
     console.info('Callback when the second button is clicked')
@@ -364,6 +363,7 @@ export struct PlayPlayer {
               surfaceHeight: PlayConstants.PLAY_PLAYER.SURFACE_HEIGHT
             });
             this.surfaceID = Number(this.xComponentController.getXComponentSurfaceId());
+            this.playVideoModel?.setSurfaceId(this.surfaceID);
             this.preparePlayer().then((src) => {
               if (this.playVideoModel) {
                 this.playVideoModel.firstPlay(this.index, src, this.surfaceID);
@@ -461,14 +461,12 @@ export struct PlayPlayer {
         Row(){
           Button('全屏')
             .onClick(() => {
-           //   console.info('video_test ' + this.srcParam)
               if (this.dialogController != null) {
                 this.videoSrc = this.srcParam
                 this.videoResizeMode = this.resizeMode
                 this.startTime = this.startSecond
                 // this.paused = true
                 this.dialogController.open()
-              //  setTimeout((): void => this.setModalVisible(false), 5000);
               }
             }).visibility(Visibility.None)
         }
