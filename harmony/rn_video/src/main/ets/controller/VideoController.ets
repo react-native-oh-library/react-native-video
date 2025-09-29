@@ -45,6 +45,8 @@ export class VideoController {
   private index: number = 0;
   private url: string | media.AVFileDescriptor = '';
   private surfaceId: number = 0;
+  private _surfaceIdFull: number = 0;
+  private isFullScreen: boolean = false;
   private playSpeed: number = PlayConstants.PLAY_PAGE.PLAY_SPEED;
   private seekTime: number = PlayConstants.PLAY_PROGRESS.SEEK_TIME;
   private playerThis!: IPlayPlayer;
@@ -61,7 +63,20 @@ export class VideoController {
   constructor() {
     this.createAVPlayer();
   }
+  public setSurfaceIdEx(value: number) {
+    if(value != 0) {
+      this._surfaceIdFull = value;
+      this.isFullScreen = true;
+      this.avPlayer.surfaceId = String(this._surfaceIdFull);
+    } else {
+      this.isFullScreen = false;
+      this.avPlayer.surfaceId = String(this.surfaceId);
+    }
+  }
 
+  public setSurfaceId(value: number) {
+    this.surfaceId = value;
+  }
   /**
    * Creates a videoPlayer object.
    */
@@ -151,7 +166,14 @@ export class VideoController {
     }
     Logger.debug(TAG, `bindState end`);
   }
-
+  
+  setVideoTyped(type:media.VideoScaleType) {
+    this.avPlayer.videoScaleType = type;
+  }
+  getAvPlayer(): media.AVPlayer {
+    return this.avPlayer;
+  }
+  
   /**
    *
    * @author huKang
@@ -503,9 +525,19 @@ export class VideoController {
           if (viewRatio > videoRatio) {
             this.playerThis.videoHeight = `${viewHeight}`;
             this.playerThis.videoWidth = `${viewHeight * videoRatio}`;
+
+            if (this.isFullScreen) {
+              this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT;
+              this.playerThis.videoWidth = CommonConstants.FULL_PERCENT;
+              this.playerThis.videoHeight = CommonConstants.FULL_PERCENT;
+            }
           } else {
             this.playerThis.videoWidth = `${viewWidth}`;
             this.playerThis.videoHeight = `${viewWidth / videoRatio}`;
+            if (this.isFullScreen) {
+              this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT;
+              this.playerThis.videoWidth = CommonConstants.FULL_PERCENT;
+            }
           }
         } else {
           Logger.error(TAG, `ResizeMode contain playerWidth or playerHeight or viewHeight = 0 `);

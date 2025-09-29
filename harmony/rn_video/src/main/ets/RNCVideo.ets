@@ -112,6 +112,7 @@ export struct RNCVideo {
   @Provide('volumeVar') volume: number = PlayConstants.PLAY_PAGE.VOLUME;
   @Provide('rateVar') rate: number = media.PlaybackSpeed.SPEED_FORWARD_1_00_X;
   @Provide('disableFocusVar') disableFocus: boolean = false; /* RN侧默认是独占模式传递FALSE过来，鸿蒙默认未共享模式*/
+  @Provide('currentPlaybackTimeV') currentPlaybackTime : number = 0.00;
   @Provide('preventsDisplaySleepDuringVideoPlaybackVar') preventsDisplaySleepDuringVideoPlayback: boolean =
     true; /* 默认true*/
   @State
@@ -299,6 +300,7 @@ export struct RNCVideo {
         playableDuration: _playableDuration,
         seekableDuration: _seekableDuration
       })
+      this.currentPlaybackTime = time;
       this.startSecond = time
     }
   }
