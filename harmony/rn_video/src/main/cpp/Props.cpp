@@ -52,6 +52,8 @@ RNCVideoProps::RNCVideoProps(const PropsParserContext &context, const RNCVideoPr
       currentPlaybackTime(
           convertRawProp(context, rawProps, "currentPlaybackTime", sourceProps.currentPlaybackTime, {0.0})),
       disableFocus(convertRawProp(context, rawProps, "disableFocus", sourceProps.disableFocus, {false})),
+      enterPictureInPictureOnLeave(convertRawProp(context, rawProps, "enterPictureInPictureOnLeave", sourceProps.enterPictureInPictureOnLeave, {false})),
+      navigationId(convertRawProp(context, rawProps, "navigationId", sourceProps.navigationId, {})),
       filter(convertRawProp(context, rawProps, "filter", sourceProps.filter, {RNCVideoFilter::NONE})),
       filterEnabled(convertRawProp(context, rawProps, "filterEnabled", sourceProps.filterEnabled, {false})),
       fullscreen(convertRawProp(context, rawProps, "fullscreen", sourceProps.fullscreen, {false})),

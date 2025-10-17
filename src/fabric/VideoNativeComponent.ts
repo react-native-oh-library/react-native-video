@@ -238,6 +238,7 @@ export interface VideoNativeProps extends ViewProps {
   controls?: boolean // Platforms: Android ExoPlayer, iOS, react-native-dom
   currentPlaybackTime?: Double // Platforms: Android ExoPlayer, iOS
   disableFocus?: boolean // Platforms: Android Exoplayer
+  enterPictureInPictureOnLeave?: boolean // harmony
   filter?: Filter // iOS
   filterEnabled?: boolean // iOS
   fullscreen?: boolean; // ios, default false
@@ -251,6 +252,7 @@ export interface VideoNativeProps extends ViewProps {
   minLoadRetryCount?: Int32; // Android ExoPlayer
   mixWithOthers?: WithDefault<'inherit' | 'mix' | 'duck', 'inherit'>; // ios, 'inherit'
   muted?: boolean; // all ,false (default) - Don't mute audio
+  navigationId?: string; // harmony
   paused?: boolean; // all , false (default) - Don't pause the media
   pictureInPicture?: boolean; // ios, false
   playInBackground?: boolean; // Platforms: Android ExoPlayer, Android MediaPlayer, iOS || false (default) - Don't continue playing the media
