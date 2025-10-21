@@ -106,6 +106,7 @@ export interface ReactVideoProps extends ReactVideoEvents {
   currentPlaybackTime?: number; // Android ExoPlayer, iOS
   controls?: boolean; // Android ExoPlayer, iOS, react-native-dom
   disableFocus?: boolean; // Android Exoplayer
+  enterPictureInPictureOnLeave?: boolean; // harmony
   filter?: Filter; // iOS
   filterEnabled?:	boolean; // iOS
   fullscreen?: boolean; // iOS
@@ -117,6 +118,7 @@ export interface ReactVideoProps extends ReactVideoEvents {
   minLoadRetryCount?: number;	// Android
   mixWithOthers?: 'inherit' | 'mix' | 'duck'; // iOS
   muted?: boolean;
+  navigationId?: string; // harmony
   paused?: boolean;
   pictureInPicture?: boolean // ios, false
   playInBackground?: boolean // Platforms: Android ExoPlayer, Android MediaPlayer, iOS || false (default) - Don't continue playing the media
