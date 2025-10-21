@@ -163,7 +163,11 @@ export struct PlayPlayer {
       isInitialAutoStartEnabled: this.enterPictureInPictureOnLeave,
       playVideoModal: this.playVideoModel,
       isInitialStartPip: this.pictureInPicture,
-      navigationId: this.navigationId
+      navigationId: this.navigationId,
+      contentSize: {
+        contentWidth: this.changedViewWidth,
+        contentHeight: this.changedViewHeight,
+      }
     }
     PipManager.getInstance().init(this.getUIContext().getHostContext() as Context, this.xComponentController, otherInitParams);
   }

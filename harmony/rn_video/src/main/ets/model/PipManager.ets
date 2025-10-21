@@ -6,11 +6,17 @@ import { IRNCVideo } from '../RNCVideo';
 
 const TAG = 'PipManager';
 
+interface contentSizeType {
+  contentWidth: number;
+  contentHeight: number;
+}
+
 export interface  PipManagerInitProps {
   navigationId?: string | undefined;
   isInitialAutoStartEnabled?: boolean;
   playVideoModal?: VideoController;
   isInitialStartPip?: boolean;
+  contentSize?: contentSizeType;
 }
 
 export class PipManager {
@@ -112,8 +118,8 @@ export class PipManager {
       // 2、UIAbility只有单页面时，无需设置navigationId，还原场景下也能够从画中画窗口恢复到原页面
       navigationId: otherParams.navigationId || '',
       templateType: PiPWindow.PiPTemplateType.VIDEO_PLAY,
-      contentWidth: 1920,
-      contentHeight: 1080,
+      contentWidth: otherParams.contentSize?.contentWidth || 1920,
+      contentHeight: otherParams.contentSize?.contentHeight || 1080,
     };
 
     // 通过create接口创建画中画控制器实例
@@ -146,17 +152,6 @@ export class PipManager {
     }).catch((err: BusinessError) => {
       Logger.error(TAG, `Failed to start pip. Cause:${err.code}, message:${err.message}`);
     });
-  }
-
-  /**
-   * 更新画中画媒体源尺寸信息
-   * @param width
-   * @param height
-   */
-  updateContentSize(width: number, height: number) {
-    if (this.pipController) {
-      this.pipController.updateContentSize(width, height);
-    }
   }
 
   /**
