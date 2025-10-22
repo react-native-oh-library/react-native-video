@@ -131,7 +131,7 @@ export class VideoController {
   bindState(): void {
     Logger.info(TAG, `bindState`);
     let lastCalledTime = 0;
-    const interval = 500;
+    const interval = 250;
     if (this.avPlayer) {
       this.onStateChange();
       this.avPlayer.on(Events.TIME_UPDATE, (time: number) => {
@@ -144,7 +144,7 @@ export class VideoController {
 
       this.avPlayer.on(Events.DURATION_UPDATE, (durationA) => {
         Logger.info(TAG, `durationUpdate success,new duration is=${durationA}`);
-        this.duration = durationA == 0 ? 0 : Math.floor(durationA / 1000); // ms->s
+        this.duration = durationA == 0 ? 0 : durationA / 1000; // ms->s  视频总时长，毫秒转秒，是否取整交给开发者决定
       })
 
       this.avPlayer.on(Events.ERROR, (error) => {
@@ -186,7 +186,7 @@ export class VideoController {
             break;
           case media.BufferingInfoType.CACHED_DURATION: // 表示缓存时长，毫秒（ms）。
             // Logger.error(TAG, `onVideoProgress CACHED_DURATION value = ${value}`);
-            this.mVideoBufferedDuration = Math.floor(value / 1000); // ms--?s
+            this.mVideoBufferedDuration = value / 1000; // ms--?s
             break;
           default:
             break;
@@ -730,6 +730,8 @@ export class VideoController {
    */
   onVideoEnd(): void {
     this.playPageThis.onVideoEnd();
+    // 当时视频播放完成时，最后给播放器一个onVideoProgress回调，用于更新进度条
+    this.onVideoProgress(this.avPlayer?.currentTime);
   }
 
   /**
