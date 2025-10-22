@@ -1,6 +1,6 @@
 {
     "name": "@react-native-oh-tpl/react-native-video",
-    "version": "6.13.0-rc.5",
+    "version": "6.13.1-rc.1",
     "description": "A <Video /> element for react-native",
     "harmony": {
         "alias": "react-native-video"
