@@ -24,17 +24,30 @@
 import {RNPackage, TurboModulesFactory} from '@rnoh/react-native-openharmony/ts';
 import type {TurboModule, TurboModuleContext} from '@rnoh/react-native-openharmony/ts';
 import {RNCVideoTurboModule} from './RNCVideoTurboModule';
-
+import {VideoManagerTurboModule} from './VideoManagerTurboModule';
+import {VideoDecoderInfoTurboModule} from './VideoDecoderInfoTurboModule';
+import type {
+  DescriptorWrapperFactoryByDescriptorTypeCtx,
+  DescriptorWrapperFactoryByDescriptorType,
+} from "@rnoh/react-native-openharmony/ts";
+// import codegen
+import { RNC } from "./generated/ts";
 class RNCVideoTurboModulesFactory extends TurboModulesFactory {
   createTurboModule(name: string): TurboModule | null {
     if (name === 'RNCVideoTurboModule') {
       return new RNCVideoTurboModule(this.ctx);
+    } else if (name === 'VideoManager') {
+      return new VideoManagerTurboModule(this.ctx);
+    } else if (name === 'VideoDecoderInfoModule') {
+      return new VideoDecoderInfoTurboModule(this.ctx);
     }
     return null;
   }
 
   hasTurboModule(name: string): boolean {
-    return name === 'RNCVideoTurboModule';
+    return name === 'RNCVideoTurboModule'
+      || name === 'VideoManager'
+      || name === 'VideoDecoderInfoModule';
   }
 }
 
@@ -42,5 +55,14 @@ export class RNCVideoPackage extends RNPackage {
   createTurboModulesFactory(ctx: TurboModuleContext): TurboModulesFactory {
     globalThis.myContext = ctx.uiAbilityContext;
     return new RNCVideoTurboModulesFactory(ctx);
+  }
+
+  createDescriptorWrapperFactoryByDescriptorType(
+    ctx: DescriptorWrapperFactoryByDescriptorTypeCtx
+  ): DescriptorWrapperFactoryByDescriptorType {
+    return {
+      [RNC.RNCVideo.NAME]: (ctx) =>
+      new RNC.RNCVideo.DescriptorWrapper(ctx.descriptor),
+    };
   }
 }

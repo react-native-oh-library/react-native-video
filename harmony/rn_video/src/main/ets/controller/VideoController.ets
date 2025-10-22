@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import { drm } from '@kit.DrmKit'
 import media from '@ohos.multimedia.media';
 import audio from '@ohos.multimedia.audio';
 import Logger from '../common/util/Logger';
@@ -29,12 +30,14 @@ import { AvplayerStatus, CommonConstants, Events, ResizeMode, CurrentTime } from
 import { PlayConstants } from '../common/constants/PlayConstants';
 import { AudioTracksBean, VideoTracksBean } from '../common/bean/AudioTracksBean';
 import { IPlayPlayer } from '../view/PlayPlayer';
-import { IRNCVideo } from '../RNCVideo';
+import { RNCVideo } from '../RNCVideo';
 import Matrix4 from '@ohos.matrix4'
 import { display } from '@kit.ArkUI';
-import { deviceInfo } from '@kit.BasicServicesKit'
+import { BusinessError  } from '@kit.BasicServicesKit'
+import { PlayPlayer } from '../view/PlayPlayer';
+import { PipManager } from './PipManager';
 
-const TAG: string = 'RNOH in ctrl'
+const TAG: string = 'RNVideoController'
 
 @Observed
 export class VideoController {
@@ -44,22 +47,27 @@ export class VideoController {
   private loop: boolean = false;
   private index: number = 0;
   private url: string | media.AVFileDescriptor = '';
-  private surfaceId: number = 0;
+  private _surfaceId: number = 0;
   private _surfaceIdFull: number = 0;
   private isFullScreen: boolean = false;
   private playSpeed: number = PlayConstants.PLAY_PAGE.PLAY_SPEED;
   private seekTime: number = PlayConstants.PLAY_PROGRESS.SEEK_TIME;
   private playerThis!: IPlayPlayer;
-  private playPageThis!: IRNCVideo;
+  public playPageThis!: RNCVideo;
   private preMutedVolume: number = 1.0;
   private mMuted: boolean = false;
   private flagtd: boolean = false;
+  private isSeeking : boolean = false;
   private mVideoBufferedDuration: number =
     0; // 对标安卓，获取缓冲时间， mVideoBufferedDuration = (int) Math.round((double) (mVideoDuration * percent) / 100.0); playableDuration =  mVideoBufferedDuration / 1000.0
   public audioTracksBeanArr?: AudioTracksBean[];
   public videoTracksBeanArr?: VideoTracksBean[];
   private mPreventsDisplaySleepDuringVideoPlayback: boolean = true; /* 默认true*/
-
+  isPiPWindowLoad: boolean = false; // 是否启动画中画
+  isPiPWindowRestore: boolean = false; // 画中画从小窗口复原
+  mediaKeySystem: drm.MediaKeySystem | undefined= undefined;
+  mediaKeySession: drm.MediaKeySession | undefined= undefined;
+  pipManager: PipManager = new PipManager()
   constructor() {
     this.createAVPlayer();
   }
@@ -70,12 +78,25 @@ export class VideoController {
       this.avPlayer.surfaceId = String(this._surfaceIdFull);
     } else {
       this.isFullScreen = false;
-      this.avPlayer.surfaceId = String(this.surfaceId);
+      this.avPlayer.surfaceId = String(this._surfaceId);
     }
   }
 
   public setSurfaceId(value: number) {
-    this.surfaceId = value;
+    this._surfaceId = value;
+  }
+
+  public setIsPiPWindowLoad(value: boolean) {
+    this.isPiPWindowLoad = value;
+  }
+  public setIsPiPWindowRestore(value: boolean) {
+    this.isPiPWindowRestore = value;
+  }
+  public getSurfaceId(): string {
+    return String(this._surfaceId);
+  }
+  public getController():XComponentController {
+    return (this.playerThis as PlayPlayer).xComponentController
   }
   /**
    * Creates a videoPlayer object.
@@ -83,10 +104,10 @@ export class VideoController {
   createAVPlayer(): void {
     media.createAVPlayer().then((avPlayer) => {
       if (avPlayer) {
-        Logger.debug(TAG, `createAVPlayer isNull: ${avPlayer == null}`);
+        Logger.info(TAG, `createAVPlayer isNull: ${avPlayer == null}`);
         this.avPlayer = avPlayer;
         this.bindState();
-        Logger.debug(TAG, `createAVPlayer after bind`);
+        Logger.info(TAG, `createAVPlayer after bind`);
         if (this.flagtd) {
           this.flagtd = false;
           if (typeof this.url === "string") {
@@ -94,9 +115,9 @@ export class VideoController {
           } else {
             this.avPlayer.fdSrc = this.url;
           }
-          Logger.debug(TAG, `createAVPlayer need toplay url,after bind:` + this.url);
+          Logger.error(TAG, `createAVPlayer need toplay url,after bind:` + this.url);
         } else {
-          Logger.debug(TAG, `createAVPlayer noneed toplay url,after bind`);
+          Logger.error(TAG, `createAVPlayer noneed toplay url,after bind`);
         }
       } else {
         Logger.error(TAG, '[PlayVideoModel] createAvPlayer fail!');
@@ -108,7 +129,7 @@ export class VideoController {
    * AVPlayer binding event.
    */
   bindState(): void {
-    Logger.debug(TAG, `bindState`);
+    Logger.info(TAG, `bindState`);
     let lastCalledTime = 0;
     const interval = 500;
     if (this.avPlayer) {
@@ -122,49 +143,117 @@ export class VideoController {
       });
 
       this.avPlayer.on(Events.DURATION_UPDATE, (durationA) => {
-        Logger.debug(TAG, `durationUpdate success,new duration is=${durationA}`);
+        Logger.info(TAG, `durationUpdate success,new duration is=${durationA}`);
         this.duration = durationA == 0 ? 0 : Math.floor(durationA / 1000); // ms->s
       })
 
       this.avPlayer.on(Events.ERROR, (error) => {
-        Logger.debug(TAG, `event error： ${JSON.stringify(error)}`);
+        Logger.error(TAG, `event error： ${JSON.stringify(error)}`);
+        if (this.playPageThis.disableDisconnectError) {
+          switch (error.code) {
+            case 5411001:
+            case 5411002:
+            case 5411003:
+            case 5411004:
+              Logger.info(TAG, 'disableDisconnectError');
+              return;
+            default:
+              break;
+          }
+        }
         this.playError(JSON.stringify(error));
       })
 
       this.avPlayer.on(Events.END_OF_STREAM, () => {
-        Logger.debug(TAG, 'END_OF_STREAM');
+        Logger.info(TAG, 'END_OF_STREAM');
         this.onVideoEnd();
       })
 
       this.avPlayer.on(Events.BUFFERING_UPDATE, (infoType: media.BufferingInfoType, value: number) => {
         /* 播放缓存事件回调方法。BufferingInfoType为BUFFERING_PERCENT或CACHED_DURATION时，value值有效，否则固定为0。 */
-        Logger.debug(TAG, 'BUFFERING_UPDATE');
+        // Logger.error(TAG, 'BUFFERING_UPDATE');
         switch (infoType) {
           case media.BufferingInfoType.BUFFERING_START: // 表示缓存开始，
-            this.onVideoPlaybackStalled();
+            // this.onVideoPlaybackStalled(); 6.13.0版本无此接口
             this.onVideoBuffer(true);
             break;
           case media.BufferingInfoType.BUFFERING_END: // 表示缓存结束，
-            this.onVideoPlaybackResume();
+            // this.onVideoPlaybackResume(); 6.13.0版本无此接口
             this.onVideoBuffer(false);
             break;
           case media.BufferingInfoType.BUFFERING_PERCENT: // 表示缓存百分比
             /* 此时的value有值，表示缓存百分比*/
             break;
           case media.BufferingInfoType.CACHED_DURATION: // 表示缓存时长，毫秒（ms）。
-            Logger.debug(TAG, `onVideoProgress CACHED_DURATION value = ${value}`);
+            // Logger.error(TAG, `onVideoProgress CACHED_DURATION value = ${value}`);
             this.mVideoBufferedDuration = Math.floor(value / 1000); // ms--?s
             break;
           default:
             break;
         }
       })
+      this.avPlayer.on(Events.VOLUMECHANGE, (volume: number) => {
+        this.playPageThis.onVolumeChange(volume);
+      })
+      this.avPlayer.on(Events.AUDIOINTERRUPT, (inter) => {
+        this.playPageThis.onAudioFocusChanged(inter.eventType == 2);
+      })
+      this.avPlayer.on(Events.SPEEDDONE, (speed: number) => {
+        this.playPageThis.onPlaybackRateChange(speed);
+      })
 
       this.avPlayer.on(Events.SEEK_DONE, (seekDoneTime: number) => {
-        Logger.debug(TAG, `seekDone success,and seek time is: ${seekDoneTime} `);
+        this.playPageThis.onVideoSeek(this.avPlayer.currentTime,this.seekTime);
+        this.isSeeking = false;
+        this.playPageThis.onVideoPlaybackStateChanged(this.avPlayer.state == AvplayerStatus.PLAYING, this.isSeeking);
+        // Logger.info(TAG, `seekDone success,and seek time is: ${seekDoneTime} `);
       })
+
+      this.avPlayer.on(Events.VIDEOSIZECHANGE, (width: number, height: number) => {
+        this.playPageThis.onVideoAspectRatio(width, height);
+      })
+
+
+      this.avPlayer.on(Events.TRACKCHANGE, (index, isSelected) => {
+        // console.error(TAG,`trackchange ${index}, ${isSelected}`);
+        const audioTracks: Array<AudioTracksBean> = [];
+        const videoTracks: Array<VideoTracksBean> = [];
+        this.avPlayer.getTrackDescription((error, arrList) => {
+          if ((arrList) != null) {
+            /* 获取到音视频轨道信息后 回传*/
+            arrList.forEach(des => {
+              if ((des.track_name as string)?.startsWith('audio')) {
+                audioTracks.push({
+                  index: des.track_index as number,
+                  type: des.track_type as number + '',
+                  bitrate: des.bitrate as number,
+                  language: des.language as string,
+                  title: des.title as string,
+                  selected: des.track_index as number == index
+                });
+              }
+              // Extract video tracks
+              else if ((des.track_name as string)?.startsWith('video')) {
+                videoTracks.push({
+                  index: des.track_index as number,
+                  selected: true,
+                  width: des.width as number,
+                  height: des.height as number,
+                  bitrate: des.bitrate as number,
+                  codecs: des.codec_mime as string,
+                  trackId:des.track_type as number
+                });
+              }
+            })
+            this.playPageThis.onVideoTracks(videoTracks);
+            this.playPageThis.onAudioTracks(audioTracks);
+          } else {
+            Logger.error(TAG, `getTrackDescription fail, error:${error}`);
+          }
+        });
+      });
     }
-    Logger.debug(TAG, `bindState end`);
+    Logger.info(TAG, `bindState end`);
   }
   
   setVideoTyped(type:media.VideoScaleType) {
@@ -189,7 +278,7 @@ export class VideoController {
           } else {
             this.avPlayer.fdSrc = this.url;
           }
-          this.onVideoLoadStart(JSON.stringify(this.url));
+          this.playPageThis.onVideoIdle();
           break;
         case AvplayerStatus.INITIALIZED:
           if (this.playerThis.disableFocus) {
@@ -200,7 +289,7 @@ export class VideoController {
             this.avPlayer.audioRendererInfo = audioRendererInfo;
           }
           this.onVideoLoadStart(JSON.stringify(this.url));
-          this.avPlayer.surfaceId = String(this.surfaceId);
+          this.avPlayer.surfaceId = String(this._surfaceId);
           this.avPlayer.prepare();
           this.status = CommonConstants.STATUS_INITIALIZED;
           this.watchStatus();
@@ -209,6 +298,7 @@ export class VideoController {
           this.avPlayer.videoScaleType = 0;
           this.status = CommonConstants.STATUS_PREPARED;
           this.initProps();
+
           this.watchStatus();
           if (this.playerThis.paused) {
             this.avPlayer.pause();
@@ -218,16 +308,26 @@ export class VideoController {
           let startSecond =
             (this.avPlayer.currentTime == CurrentTime.CURRENTTIME_MINUS_ONE ? CurrentTime.CURRENTTIME_ZERO :
             this.avPlayer.currentTime);
+          let startPos = this.playPageThis.startPosition
+          if (startPos && startPos > 0 && startPos < this.avPlayer.duration) {
+            this.avPlayer.seek(startPos)
+          }
           this.onVideoLoad(startSecond);
           this.onReadyForDisplay();
+          this.pipManager.stopPip()
+          this.pipManager.setVideoController(this)
+          this.pipManager.setXComponentController(this.getController())
+          this.pipManager.init(getContext(this))
           break;
         case AvplayerStatus.PLAYING:
           this.onReadyForDisplay();
           this.status = CommonConstants.STATUS_START;
+          this.playPageThis.onVideoPlaybackStateChanged(true, this.isSeeking);
           this.watchStatus();
           break;
         case AvplayerStatus.PAUSED:
           this.status = CommonConstants.STATUS_PAUSE;
+          this.playPageThis.onVideoPlaybackStateChanged(false, this.isSeeking);
           this.watchStatus();
           break;
         case AvplayerStatus.COMPLETED:
@@ -240,6 +340,8 @@ export class VideoController {
         case AvplayerStatus.RELEASED:
           this.avPlayer.release();
           this.status = CommonConstants.STATUS_STOP;
+          this.mediaKeySession?.destroy();
+          this.mediaKeySystem?.destroy();
           this.watchStatus();
           break;
         case AvplayerStatus.STOPPED:
@@ -258,9 +360,10 @@ export class VideoController {
    * @param surfaceId Indicates the surface ID of the surfaceId.
    */
   firstPlay(index: number, url: string | media.AVFileDescriptor, surfaceId: number): void {
+    Logger.info(TAG, `firstPlay,  url ${url}`);
     this.index = index;
     this.url = url;
-    this.surfaceId = surfaceId;
+    this._surfaceId = surfaceId;
     if (this.avPlayer && this.avPlayer.state == AvplayerStatus.IDLE) {
       if (typeof this.url === "string") {
         this.avPlayer.url = this.url;
@@ -293,32 +396,6 @@ export class VideoController {
     this.loop = !this.loop;
   }
 
-  transformPlaybackSpeed(rawSpeed: number): number {
-    switch(rawSpeed){
-      case 0.75:
-        return media.PlaybackSpeed.SPEED_FORWARD_0_75_X;
-      case 1:
-        return media.PlaybackSpeed.SPEED_FORWARD_1_00_X;
-      case 1.25:
-        return media.PlaybackSpeed.SPEED_FORWARD_1_25_X;
-      case 1.75:
-        return media.PlaybackSpeed.SPEED_FORWARD_1_75_X;
-      case 2:
-        return media.PlaybackSpeed.SPEED_FORWARD_2_00_X;
-      case 0.50:
-        return media.PlaybackSpeed.SPEED_FORWARD_0_50_X;
-      case 1.5:
-        return media.PlaybackSpeed.SPEED_FORWARD_1_50_X;
-      case 3:
-        return media.PlaybackSpeed.SPEED_FORWARD_3_00_X;
-      case 0.25:
-        return media.PlaybackSpeed.SPEED_FORWARD_0_25_X;
-      case 0.125:
-        return media.PlaybackSpeed.SPEED_FORWARD_0_125_X;
-      default:
-        return media.PlaybackSpeed.SPEED_FORWARD_1_00_X;
-    }
-  }
   /**
    * Set the playback speed.
    *
@@ -328,13 +405,26 @@ export class VideoController {
     if (CommonConstants.OPERATE_STATE.indexOf(this.avPlayer.state) === -1) {
       return;
     }
-    if(deviceInfo.sdkApiVersion < 20) {
-      const PlaybackSpeed = this.transformPlaybackSpeed(playSpeed)
-      this.avPlayer?.setSpeed(PlaybackSpeed);
-      return
+    this.playSpeed = playSpeed;
+    this.avPlayer?.setSpeed(this.playSpeed);
+  }
+  setRate(playSpeed: number): void {
+    if (CommonConstants.OPERATE_STATE.indexOf(this.avPlayer.state) === -1) {
+      return;
     }
     this.playSpeed = playSpeed;
     this.avPlayer?.setSpeed(this.playSpeed);
+  }
+
+  setSelectTrack(type: string, value: string): void {
+    // Logger.error(TAG, `setSelectTrack,  type:${type} value:${value}`);
+    if (CommonConstants.OPERATE_STATE.indexOf(this.avPlayer.state) === -1) {
+      return;
+    }
+    if (value != undefined) {
+      let indexv = Number(value);
+      this.avPlayer?.selectTrack(indexv, media.SwitchMode.SMOOTH);
+    }
   }
 
   /**
@@ -342,12 +432,15 @@ export class VideoController {
    * @return
    */
   switchVideo(newUrl: string | media.AVFileDescriptor): void {
+    Logger.info(TAG, `switchVideo,  newUrl ${newUrl}`);
     this.bindState();
     this.url = newUrl;
-    if (this.surfaceId == 0 || this.surfaceId == undefined) {
+    if (this._surfaceId == 0 || this._surfaceId == undefined) {
+      // Logger.info(TAG, `switchVideo, return`);
       return;
     }
     if (AvplayerStatus.IDLE == this.avPlayer.state) {
+      // Logger.info(TAG, `switchVideo,  IDLE `);
       if (typeof this.url === "string") {
         this.avPlayer.url = this.url;
       } else {
@@ -356,19 +449,20 @@ export class VideoController {
     } else {
       this.avPlayer.stop().then(
         ()=>{
+          Logger.info(TAG, `switchVideo, reset`);
           this.avPlayer.reset();
         }
       )
-
     }
-    Logger.debug(TAG, `switchVideo,  state11 ${JSON.stringify(this.avPlayer.state)}`);
+
+    Logger.info(TAG, `switchVideo, state ${JSON.stringify(this.avPlayer.state)}`);
   }
 
   /**
    * Switching Between Video Play and Pause.
    */
   switchPlayOrPause(paused: boolean): void {
-    Logger.debug(TAG, `switchPlayOrPause,state out= ${this.avPlayer?.state};paused= ${JSON.stringify(paused)}`);
+    Logger.info(TAG, `switchPlayOrPause,state out= ${this.avPlayer?.state};paused= ${JSON.stringify(paused)}`);
     if (paused) {
       this.avPlayer?.pause();
     } else {
@@ -384,16 +478,8 @@ export class VideoController {
       this.status === CommonConstants.STATUS_COMPLETED
     ) {
       this.avPlayer.loop = this.loop;
-      Logger.debug(TAG, `switchRepeat2, ${JSON.stringify(repeat)}`);
+      Logger.info(TAG, `switchRepeat2, ${JSON.stringify(repeat)}`);
     }
-  }
-  handleBoundaryVolume(volume: number): number {
-    if(volume>1){
-      return 1
-    }else if(volume<0){
-      return 0
-    }
-    return volume
   }
 
   /**
@@ -416,14 +502,14 @@ export class VideoController {
       this.status === CommonConstants.STATUS_PAUSE ||
       this.status === CommonConstants.STATUS_COMPLETED
     ) {
-      this.avPlayer.setVolume(this.handleBoundaryVolume(currentVolume));
-      Logger.debug(TAG, `switchMuted2,currentVolume= ${JSON.stringify(currentVolume)}`);
+      this.avPlayer.setVolume(currentVolume);
+      Logger.info(TAG, `switchMuted2,currentVolume= ${JSON.stringify(currentVolume)}`);
     }
 
-    this.avPlayer.on('volumeChange', (vol: number) => {
-      Logger.debug(TAG, `volumeChange success,and new volume is= ${vol}}`);
-      this.avPlayer.off('volumeChange');
-    })
+    // this.avPlayer.on('volumeChange', (vol: number) => {
+    //   Logger.error(TAG, `volumeChange success,and new volume is= ${vol}}`);
+    //   this.avPlayer.off('volumeChange');
+    // })
   }
 
   /* 设置播放时屏幕不息屏 -- 暂无HM接口支持*/
@@ -441,28 +527,29 @@ export class VideoController {
    * @return
    */
   setSeekTime(value: number): void {
-    Logger.debug(TAG, `setSeekTime== ${JSON.stringify(value)}`);
+    // Logger.info(TAG, `setSeekTime== ${JSON.stringify(value)}`);
     this.seekTime = value * 1000;
-    Logger.debug(TAG, `setSeekTime== ${this.seekTime}`);
+    // Logger.info(TAG, `setSeekTime== ${this.seekTime}`);
     /* seek 只能在prepared/playing/paused/complete状态调用 毫秒（ms）*/
     if (this.status === CommonConstants.STATUS_PREPARED ||
       this.status === CommonConstants.STATUS_START ||
       this.status === CommonConstants.STATUS_PAUSE ||
       this.status === CommonConstants.STATUS_COMPLETED
     ) {
+      this.isSeeking = true;
+      this.playPageThis.onVideoPlaybackStateChanged(this.avPlayer.state == AvplayerStatus.PLAYING, this.isSeeking);
       this.avPlayer.seek(this.seekTime, media.SeekMode.SEEK_CLOSEST);
     }
   }
 
   /* 初始化播放器状态 */
   initProps(): void {
-    Logger.debug(TAG, `initProps repeat, ${JSON.stringify(this.playerThis.repeat)}`);
+    Logger.info(TAG, `initProps repeat, ${JSON.stringify(this.playerThis.repeat)}`);
     this.avPlayer.loop = this.playerThis.repeat;
     this.mMuted = this.playerThis.muted;
     this.preMutedVolume = this.playerThis.volume;
     /* 更新音量 静音 -20231227 */
     this.switchMuted(this.mMuted);
-    this.setSpeed(this.playerThis.rate)
     /* 更新resizeMode */
     this.convertResizeMode(this.playerThis.resizeMode);
   }
@@ -483,10 +570,9 @@ export class VideoController {
         }else if(currentVolume<0){
           currentVolume = 0
         }
-        Logger.debug(TAG, `updateProp volume, ${JSON.stringify(this.playerThis.volume)}`);
-        this.avPlayer.setVolume(this.handleBoundaryVolume(this.playerThis.volume)); /* 更新音量 */
-        this.setSpeed(this.playerThis.rate)
-        Logger.debug(TAG, `updateProp resizeMode, ${JSON.stringify(this.playerThis.resizeMode)}`);
+        Logger.info(TAG, `updateProp volume, ${JSON.stringify(this.playerThis.volume)}`);
+        this.avPlayer.setVolume(this.playerThis.volume); /* 更新音量 */
+        Logger.info(TAG, `updateProp resizeMode, ${JSON.stringify(this.playerThis.resizeMode)}`);
         /* 更新 resizeMode */
         this.convertResizeMode(this.playerThis.resizeMode);
       }
@@ -494,7 +580,7 @@ export class VideoController {
       /* 更新音频流类型 */
       this.watchStatus();
     } else {
-      Logger.debug(TAG, `updateProp :  ${JSON.stringify(this.avPlayer)}`);
+      Logger.error(TAG, `updateProp :  ${JSON.stringify(this.avPlayer)}`);
     }
 
   }
@@ -525,19 +611,21 @@ export class VideoController {
           if (viewRatio > videoRatio) {
             this.playerThis.videoHeight = `${viewHeight}`;
             this.playerThis.videoWidth = `${viewHeight * videoRatio}`;
+            let displayInfo = display.getDefaultDisplaySync();
+            console.error('video_test convertResizeMode '+ this.isFullScreen)
 
-            if (this.isFullScreen) {
+            if (this.isFullScreen
+              && (displayInfo.orientation === display.Orientation.LANDSCAPE
+                || displayInfo.orientation === display.Orientation.LANDSCAPE_INVERTED)) {
+              console.error('当前屏幕方向: 横屏');
+              console.error('isFullScreen')
               this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT;
-              this.playerThis.videoWidth = CommonConstants.FULL_PERCENT;
-              this.playerThis.videoHeight = CommonConstants.FULL_PERCENT;
+              this.playerThis.videoWidth = CommonConstants.NINETY_PERCENT;
+              this.playerThis.videoHeight = CommonConstants.NINETY_PERCENT;
             }
           } else {
             this.playerThis.videoWidth = `${viewWidth}`;
             this.playerThis.videoHeight = `${viewWidth / videoRatio}`;
-            if (this.isFullScreen) {
-              this.avPlayer.videoScaleType = media.VideoScaleType.VIDEO_SCALE_TYPE_FIT;
-              this.playerThis.videoWidth = CommonConstants.FULL_PERCENT;
-            }
           }
         } else {
           Logger.error(TAG, `ResizeMode contain playerWidth or playerHeight or viewHeight = 0 `);
@@ -581,6 +669,15 @@ export class VideoController {
     return this.status;
   }
 
+  setAudioOutput(audioOut:string) {
+    if(audioOut == 'speaker') {
+      // 此处鸿蒙接口无效
+      // audio.getAudioManager().setDeviceActive(audio.ActiveDeviceType.SPEAKER, true);
+    } else if (audioOut == 'earpiece') {
+      // audio.getAudioManager().setDeviceActive(audio.ActiveDeviceType.BLUETOOTH_SCO, true);
+    }
+  }
+
   /**
    * Pass this on the playback page.
    *
@@ -589,7 +686,7 @@ export class VideoController {
    */
   initPlayerThis(playerThis: IPlayPlayer): void {
     if (playerThis == null) {
-      Logger.debug(TAG, `initPlayerThis is null .`);
+      Logger.error(TAG, `initPlayerThis is null .`);
     }
     this.playerThis = playerThis;
   }
@@ -600,7 +697,7 @@ export class VideoController {
    * @param cUri: 当前视频URL
    */
   onVideoLoadStart(cUri: string | media.AVFileDescriptor): void {
-    Logger.debug(TAG, `onVideoLoadStart URL: ${cUri}`);
+    Logger.info(TAG, `onVideoLoadStart URL: ${cUri}`);
     this.playPageThis.onVideoLoadStart(cUri);
   }
 
@@ -611,7 +708,7 @@ export class VideoController {
    * @return null
    */
   onReadyForDisplay(): void {
-    Logger.debug(TAG, `onReadyForDisplay`);
+    Logger.info(TAG, `onReadyForDisplay`);
     this.playPageThis.onReadyForDisplay();
   }
 
@@ -625,6 +722,7 @@ export class VideoController {
     let playableDuration = this.mVideoBufferedDuration == 0 ? 0 : this.mVideoBufferedDuration;
     let seekableDuration = this.duration == 0 ? 0 : this.duration;
     this.playPageThis.onVideoProgress(sec, playableDuration, seekableDuration);
+    // Logger.error(TAG, `sec ${sec}`);
   }
 
   /**
@@ -650,24 +748,29 @@ export class VideoController {
 
     this.avPlayer.getTrackDescription((error, arrList) => {
       if ((arrList) != null) {
-
         /* 获取到音视频轨道信息后 回传*/
         this.playPageThis.onVideoLoad(startSecond, this.duration, this.avPlayer.width, this.avPlayer.height,
-          orientationIn);
+          orientationIn,arrList);
 
       } else {
-        Logger.debug(TAG, `getTrackDescription fail, error:${error}`);
+        Logger.error(TAG, `getTrackDescription fail, error:${error}`);
       }
     });
   }
 
+  async getSelectTracks(): Promise<number[]> {
+    if (CommonConstants.OPERATE_STATE.indexOf(this.avPlayer.state) === -1) {
+      return [];
+    }
+    return await this.avPlayer.getSelectedTracks();
+  }
 
   /**
    *
    * @param isBuffering Boolean indicating whether buffering is active
    */
   onVideoBuffer(isBuffering: boolean): void {
-    Logger.debug(TAG, `onVideoBuffer out：${JSON.stringify(isBuffering)}`);
+    Logger.info(TAG, `onVideoBuffer out：${JSON.stringify(isBuffering)}`);
     this.playPageThis.onVideoBuffer(isBuffering);
   }
 
@@ -675,16 +778,16 @@ export class VideoController {
    * event video onBuffering start
    */
   onVideoPlaybackStalled(): void {
-    Logger.debug(TAG, `onVideoPlaybackStalled`);
-    this.playPageThis.onVideoPlaybackStalled();
+    // Logger.info(TAG, `onVideoPlaybackStalled`);
+    // this.playPageThis.onVideoPlaybackStalled();
   }
 
   /**
    * event video onBuffering end
    */
   onVideoPlaybackResume(): void {
-    Logger.debug(TAG, `onVideoPlaybackResume`);
-    this.playPageThis.onVideoPlaybackResume();
+    Logger.error(TAG, `onVideoPlaybackResume`);
+    // this.playPageThis.onVideoPlaybackResume();
   }
 
   /**
@@ -737,7 +840,7 @@ export class VideoController {
    *
    * @param playPageThis This object of PlayPage.
    */
-  initPlayPageThis(playPageThis: IRNCVideo): void {
+  initPlayPageThis(playPageThis: RNCVideo): void {
     this.playPageThis = playPageThis;
   }
 
@@ -745,7 +848,7 @@ export class VideoController {
    * An error is reported during network video playback.
    */
   playError(errMsg: string): void {
-    Logger.debug(TAG, `onVideoError：${JSON.stringify(errMsg)}`);
+    Logger.error(TAG, `onVideoError：${JSON.stringify(errMsg)}`);
     if (this.playPageThis) {
       this.playPageThis.onVideoError(errMsg);
     }

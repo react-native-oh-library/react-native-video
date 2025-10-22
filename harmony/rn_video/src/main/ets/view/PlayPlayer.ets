@@ -29,17 +29,18 @@ import Logger from '../common/util/Logger';
 import Matrix4 from '@ohos.matrix4'
 import mediaquery from '@ohos.mediaquery'
 import fs from '@ohos.file.fs';
-import { BusinessError } from '@kit.BasicServicesKit';
+import { BusinessError , emitter} from '@kit.BasicServicesKit';
 import { display } from '@kit.ArkUI';
 import {OverlayDialogEx} from './OverlayDialogEx'
+import {VIDEO_EVENT_ID, EventType, EventData} from '../VideoManagerTurboModule'
 import { AvplayerStatus } from '../common/constants/CommonConstants';
+import { ControlsStyles } from '../RNCVideo'
 
 export interface IPlayPlayer {
   muted: boolean
   repeat: boolean
   paused: boolean
   volume: number
-  rate: number
   resizeMode: string
   disableFocus: boolean
   preventsDisplaySleepDuringVideoPlayback: boolean
@@ -53,7 +54,7 @@ export interface IPlayPlayer {
   matrix: Matrix4.Matrix4Transit
 }
 
-const TAG: string = 'RNOH in ctrl'
+const TAG: string = 'RNPlayPlayer'
 
 @Component
 export struct PlayPlayer {
@@ -62,7 +63,6 @@ export struct PlayPlayer {
   @Consume('mutedVar') @Watch("onMutedChanged") muted: boolean;
   @Consume('fullscreenVar') @Watch("fullscreenChanged") fullscreen: boolean;
   @Consume('repeatVar') @Watch("onRepeatChanged") repeat: boolean;
-  @Consume('rateVar') @Watch("onChanged") rate: number;
   @Consume('pausedVar') @Watch("onPausedChanged") paused: boolean;
   @Consume('controlsVar') @Watch("onControlsChanged") controls: boolean;
   @Consume('volumeVar') @Watch("onChanged") volume: number;
@@ -70,6 +70,16 @@ export struct PlayPlayer {
   @Consume('disableFocusVar') @Watch("onChanged") disableFocus: boolean;
   @Consume @Watch("onChanged") changedViewWidth: number;
   @Consume @Watch("onChanged") changedViewHeight: number;
+  @Consume ("viewTypeVar") viewType: number;
+  @Consume ('rateVar') @Watch("onSpeeChanged") rate: number; /*1 surface 0 texture*/
+  @Consume('selectedTextTrackType')  textTrackType :string | undefined;
+  @Consume('selectedTextTrackValue') textTrackValue :string | undefined;
+  @Consume('selectedAudioTrackType') @Watch("onTrackChanged") audioTrackType :string;
+  @Consume('selectedAudioTrackValue') @Watch("onTrackChanged") audioTrackValue :string;
+  @Consume('selectedVideoTrackType') videoTrackType :string | undefined;
+  @Consume('selectedVideoTrackValue') videoTrackValue :string | undefined;
+  @Consume('audioOutputVar') @Watch("onAudioOutputChanged") audioOutput :string;
+
   @Consume('preventsDisplaySleepDuringVideoPlaybackVar') @Watch("setPreventsDisplaySleepDuringVideoPlaybackModifier") preventsDisplaySleepDuringVideoPlayback: boolean;
   @Provide type: number = CommonConstants.TYPE_LOCAL; //TODO:luoxf 修改td
   @State bright: number = PlayConstants.PLAY_PAGE.BRIGHT;
@@ -96,7 +106,7 @@ export struct PlayPlayer {
   @Consume
   isUserPaused: boolean
   private playVideoModel: VideoController | undefined = undefined;
-  private xComponentController: XComponentController = new XComponentController();
+  xComponentController: XComponentController = new XComponentController();
   private surfaceID: number = 0;
   private previousSrc: fs.File | string | undefined = undefined
   private orientationChange: boolean = true;
@@ -108,6 +118,11 @@ export struct PlayPlayer {
   @State videoSrc: string = ''
   @State videoResizeMode: string = ''
   @Consume ('extFullscreenVar') extFullscreen: boolean;
+  @Consume('controlsStylesVar') @Watch("onControlsStylesChange") controlsStyles: ControlsStyles | undefined;
+  @State hidePosition: Visibility = Visibility.Visible;
+  @State hidePlayPause: Visibility = Visibility.Visible;
+  @State hideSeekBar: Visibility = Visibility.Visible;
+  @State hideDuration: Visibility = Visibility.Visible;
 
   dialogController: CustomDialogController | null = new CustomDialogController({
     builder: OverlayDialogEx({
@@ -121,8 +136,19 @@ export struct PlayPlayer {
     //autoCancel: true,
     autoCancel: false,
     onWillDismiss: (dismissDialogAction: DismissDialogAction) => {
-
       this.extFullscreen = true
+      let event: emitter.InnerEvent = {
+        eventId : VIDEO_EVENT_ID,
+        priority : emitter.EventPriority.HIGH
+      };
+      const data: EventData = {
+        data: {
+          tag:this.playVideoModel?.playPageThis.tag,
+          event: EventType.SETFULLSCREENCMD,
+          fullScreen: false
+        }
+      };
+      emitter.emit(event, data);
       if (dismissDialogAction.reason != DismissReason.PRESS_BACK) {
         this.dialogController?.close();
       }
@@ -134,12 +160,18 @@ export struct PlayPlayer {
     cornerRadius: 0,
   })
 
+  onControlsStylesChange(propName: string){
+    this.hidePosition = this.controlsStyles?.hidePosition?Visibility.Hidden:Visibility.Visible;
+    this.hidePlayPause  = this.controlsStyles?.hidePlayPause?Visibility.Hidden:Visibility.Visible;
+    this.hideSeekBar = this.controlsStyles?.hideSeekBar?Visibility.Hidden:Visibility.Visible;
+    this.hideDuration = this.controlsStyles?.hideDuration?Visibility.Hidden:Visibility.Visible;
+  }
+
   aboutToAppear(): void {
     if (this.controls == true) {
       this.setIsVisibility(this.controls)
       this.resetInactivityTimer()
     }
-
     this.screenWidth = display.getDefaultDisplaySync().width
     this.screenHeight = display.getDefaultDisplaySync().height
     if (this.screenHeight > this.screenWidth) {
@@ -147,11 +179,15 @@ export struct PlayPlayer {
     } else {
       this.sliderWidth = '80%'
     }
-
+    this.onControlsStylesChange('')
     this.listenScreenDirection();
     if (this.playVideoModel) {
       this.playVideoModel.initPlayerThis(this as IPlayPlayer);
     }
+  }
+
+  onAudioOutputChanged (propName: string): void {
+    this.playVideoModel?.setAudioOutput(this.audioOutput)
   }
 
   closeFsRawFd() {
@@ -249,12 +285,13 @@ export struct PlayPlayer {
         this.videoSrc = this.srcParam
         this.videoResizeMode = this.resizeMode
         this.startTime = this.startSecond
-        this.paused = false
+        // this.paused = true
         this.dialogController.open()
-        //  setTimeout((): void => this.setModalVisible(false), 5000);
+        this.playVideoModel?.playPageThis.onVideoFullscreenPlayerDidPresent();
       }
-    }else {
+    } else {
       this.setModalVisible(false)
+      this.playVideoModel?.playPageThis?.onVideoFullscreenPlayerDidDismiss();
     }
   }
 
@@ -269,9 +306,20 @@ export struct PlayPlayer {
       this.playVideoModel.switchPlayOrPause(this.paused);
     }
   }
+  onSpeeChanged (propName: string): void {
+    Logger.info(TAG, `onSpeeChanged, ${this.rate}`);
+    this.playVideoModel?.setSpeed(this.rate);
+  }
+
+
+  onTrackChanged (propName: string): void {
+    Logger.info(TAG, `onTrackChanged, ${this.audioTrackType} ${this.audioTrackValue}`);
+    this.playVideoModel?.setSelectTrack(this.audioTrackType, this.audioTrackValue);
+  }
 
   onControlsChanged(propName: string): void {
     Logger.debug(TAG, `onControlsChanged, ${JSON.stringify(this.controls)}`);
+    this.playVideoModel?.playPageThis?.onControlsVisibilityChange(this.controls);
   }
 
   setPreventsDisplaySleepDuringVideoPlaybackModifier(propName: string): void {
@@ -339,7 +387,7 @@ export struct PlayPlayer {
     console.info('video_test Callback when the first button is clicked')
     this.playVideoModel?.setSurfaceIdEx(0);
     this.paused = this.playVideoModel?.getAvPlayer()?.state != AvplayerStatus.PLAYING
-    this.playVideoModel?.convertResizeMode(this.resizeMode);
+
   }
   onAccept() {
     console.info('Callback when the second button is clicked')
@@ -353,29 +401,28 @@ export struct PlayPlayer {
       Column() {
         XComponent({
           id: PlayConstants.PLAY_PLAYER.ID,
-          type: PlayConstants.PLAY_PLAYER.TYPE,
+          type: this.viewType == 1 ? PlayConstants.PLAY_PLAYER.TYPE : "texture",
           libraryname: PlayConstants.PLAY_PLAYER.LIBRARY_NAME,
           controller: this.xComponentController
         })
-          .onLoad(async () => {
-            this.xComponentController.setXComponentSurfaceSize({
-              surfaceWidth: PlayConstants.PLAY_PLAYER.SURFACE_WIDTH,
-              surfaceHeight: PlayConstants.PLAY_PLAYER.SURFACE_HEIGHT
-            });
-            this.surfaceID = Number(this.xComponentController.getXComponentSurfaceId());
-            this.playVideoModel?.setSurfaceId(this.surfaceID);
-            this.preparePlayer().then((src) => {
-              if (this.playVideoModel) {
-                this.playVideoModel.firstPlay(this.index, src, this.surfaceID);
-              }
-            }).catch((err: BusinessError) => {
-              Logger.debug(TAG, `onSrcChanged, preparePlayer error message:${err.message},error code:${err.code}`);
-            })
-
+        .onLoad(async () => {
+          this.xComponentController.setXComponentSurfaceSize({
+            surfaceWidth: PlayConstants.PLAY_PLAYER.SURFACE_WIDTH,
+            surfaceHeight: PlayConstants.PLAY_PLAYER.SURFACE_HEIGHT
+          });
+          this.surfaceID = Number(this.xComponentController.getXComponentSurfaceId());
+          this.playVideoModel?.setSurfaceId(this.surfaceID);
+          this.preparePlayer().then((src) => {
+            if (this.playVideoModel) {
+              this.playVideoModel.firstPlay(this.index, src, this.surfaceID);
+            }
+          }).catch((err: BusinessError) => {
+            Logger.debug(TAG, `onSrcChanged, preparePlayer error message:${err.message},error code:${err.code}`);
           })
-          .width(this.videoWidth)
-          .height(this.videoHeight)
-          .scale(this.matrix)
+        })
+        .width(this.videoWidth)
+        .height(this.videoHeight)
+        .scale(this.matrix)
       }
       .width(this.changedViewWidth)
       .height(this.changedViewHeight)
@@ -389,6 +436,7 @@ export struct PlayPlayer {
         Image(this.paused ? $r('app.media.ic_play') : $r('app.media.ic_pause'))
           .width(50)
           .height(50)
+          .visibility(this.hidePlayPause)
           .onClick(() => {
             this.paused = !this.paused
             this.isUserPaused = this.paused
@@ -397,6 +445,7 @@ export struct PlayPlayer {
           Image(this.paused ? $r('app.media.ic_play') : $r('app.media.ic_pause'))
             .width(20)
             .height(20)
+            .visibility(this.hidePlayPause)
             .onClick(() => {
               this.paused = !this.paused
               this.isUserPaused = this.paused
@@ -405,6 +454,7 @@ export struct PlayPlayer {
             .fontSize('10')
             .fontColor(Color.White)
             .margin({ left: 10 })
+            .visibility(this.hidePosition)
 
           Slider({
             value: this.startSecond,
@@ -413,6 +463,7 @@ export struct PlayPlayer {
           })
             .width(this.sliderWidth)
             .margin({ left: 5 })
+            .visibility(this.hideSeekBar)
             .onChange((value: number, mode: SliderChangeMode) => {
               let seekValue: number = value
               //滑块滑动结束后再设置seek
@@ -454,6 +505,7 @@ export struct PlayPlayer {
             .fontSize('10')
             .fontColor(Color.White)
             .margin({ left: 5 })
+            .visibility(this.hideDuration)
 
         }.width("90%")
         .height("20%")
@@ -470,7 +522,6 @@ export struct PlayPlayer {
               }
             }).visibility(Visibility.None)
         }
-
       }
       .width('100%')
       .height('100%')

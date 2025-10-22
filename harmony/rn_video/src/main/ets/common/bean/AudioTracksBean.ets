@@ -24,44 +24,21 @@
 
 
 export class AudioTracksBean {
-  /*
-   * uint32_t index;
-      std::string title;
-      std::string language;
-      std::string type;
-   * */
-  index: number;
-  title: string;
-  language: string;
-  type: string;
 
-  constructor(title: string, language: string, type: string, index: number=0) {
-    this.index = index;
-    this.title = title;
-    this.language = language;
-    this.type = type;
-  }
+  index: number=0;
+  title: string='';
+  language: string='';
+  bitrate : number=0;
+  type: string='';
+  selected: boolean=false;
 }
 
 export class VideoTracksBean {
-  /*
-   * uint32_t trackId;
-      Float bitrate;
-      std::string codecs;
-      Float height;
-      Float width;
-   * */
-  trackId: number;
-  bitrate: number;
-  codecs: string;
-  height: number;
-  width: number;
-
-  constructor(trackId: number, bitrate:number,  codecs: string, height:number, width:number) {
-    this.trackId = trackId;
-    this.bitrate = bitrate;
-    this.codecs = codecs;
-    this.height = height;
-    this.width = width;
-  }
+  index: number=0;
+  trackId: number=0;
+  bitrate: number=0;
+  codecs: string='';
+  height: number=0;
+  width: number=0;
+  selected: boolean=false;
 }

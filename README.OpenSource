@@ -1,0 +1,11 @@
+[
+    {
+        "Name": "react-native-video",
+        "License": "MIT License",
+        "License File": "LICENSE",
+        "Version Number": "6.13.0",
+        "Owner" : "xiafeng@huawei.com",
+        "Upstream URL": "https://github.com/TheWidlarzGroup/react-native-video",
+        "Description": "A <Video /> component for react-native."
+    }
+]

@@ -27,12 +27,9 @@ export class RNCVideoTurboModule extends TurboModule {
 
   constructor(protected ctx: TurboModuleContext) {
     super(ctx);
-    // console.log('[RNOH]:RNCVideoTurboModule constructor');
   }
 
   voidFunc() {
-    // console.log('RNOH SampleTurboModule::voidFunc');
   }
-
 
 }
