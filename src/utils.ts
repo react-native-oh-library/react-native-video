@@ -1,47 +1,70 @@
-/**
- * MIT License
- *
- * Copyright (C) 2023 Huawei Device Co., Ltd.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-import { Image } from "react-native";
-import type { ImageSourcePropType } from 'react-native';
-import type { ReactVideoSource } from './types/video';
+import type {Component, RefObject, ComponentClass} from 'react';
+import {Image, findNodeHandle, type ImageSourcePropType} from 'react-native';
+import type {ReactVideoSource, ReactVideoSourceProperties} from './types/video';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function generateHeaderForNative(obj?: Record<string, any>) {
+  if (!obj) {
+    return [];
+  }
+  return Object.entries(obj).map(([key, value]) => ({key, value}));
+}
 
 type Source = ImageSourcePropType | ReactVideoSource;
 
-export function generateHeaderForNative(obj?: Record<string, any>) {
-  if (!obj) return [];
-  return Object.entries(obj).map(([ key, value]) => ({ key, value }));
-}
+export function resolveAssetSourceForVideo(
+  source: Source,
+): ReactVideoSourceProperties {
+  // will convert source id to uri
+  const convertToUri = (sourceItem: number): string | undefined => {
+    const resolveItem = Image.resolveAssetSource(sourceItem);
+    if (resolveItem) {
+      return resolveItem.uri;
+    } else {
+      console.warn('cannot resolve item ', sourceItem);
+      return undefined;
+    }
+  };
 
-export function resolveAssetSourceForVideo(source: Source): ReactVideoSource {
+  // This is deprecated, but we need to support it for backward compatibility
   if (typeof source === 'number') {
     return {
-      uri: Image.resolveAssetSource(source).uri,
+      uri: convertToUri(source),
     };
   }
-  return source as ReactVideoSource;
+
+  if ('uri' in source && typeof source.uri === 'number') {
+    return {
+      ...source,
+      uri: convertToUri(source.uri),
+    };
+  }
+
+  return source as ReactVideoSourceProperties;
 }
 
-export function isFabric() {
-  // @ts-expect-error nativeFabricUIManager is not yet included in the RN types
-  return !!global?.nativeFabricUIManager;
+/**
+ * @deprecated
+ * Do not use this fn anymore. "findNodeHandle" will be deprecated.
+ * */
+export function getReactTag(
+  ref: RefObject<
+    | Component<unknown, unknown, unknown>
+    | ComponentClass<unknown, unknown>
+    | null
+  >,
+): number {
+  if (!ref.current) {
+    throw new Error('Video Component is not mounted');
+  }
+
+  const reactTag = findNodeHandle(ref.current);
+
+  if (!reactTag) {
+    throw new Error(
+      'Cannot find reactTag for Video Component in components tree',
+    );
+  }
+
+  return reactTag;
 }

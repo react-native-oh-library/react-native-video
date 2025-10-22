@@ -3,6 +3,7 @@ import { VideoController } from '../controller/VideoController';
 import display from '@ohos.display';
 import Matrix4 from '@ohos.matrix4'
 import media from '@ohos.multimedia.media';
+import { ControlsStyles } from '../RNCVideo'
 import {
   AvplayerStatus,
   CommonConstants,
@@ -37,9 +38,13 @@ export struct OverlayDialogEx {
   @Consume @Watch("onChanged") changedViewWidth: number;
   @Consume @Watch("onChanged") changedViewHeight: number;
   @Consume ('currentPlaybackTimeV') @Watch("onCurrentPlaybackTime")  currentPlaybackTime :number;
-
+  @Consume('controlsStylesVar') @Watch("onControlsStylesChange") controlsStyles: ControlsStyles | undefined;
   @State videoJustifyContent: FlexAlign = FlexAlign.Center;
   @State videoAlignItems: HorizontalAlign = HorizontalAlign.Center;
+  @State hidePosition: Visibility = Visibility.Visible;
+  @State hidePlayPause: Visibility = Visibility.Visible;
+  @State hideSeekBar: Visibility = Visibility.Visible;
+  @State hideDuration: Visibility = Visibility.Visible;
   controller?: CustomDialogController
   private xComponentController: XComponentController = new XComponentController();
 
@@ -51,33 +56,26 @@ export struct OverlayDialogEx {
 
   onCurrentPlaybackTime () {
     this.currentTime = this.currentPlaybackTime;
-    if ( this.playVideoModel?.getAvPlayer())
-      this.durationTime = this.playVideoModel?.getAvPlayer().duration * 0.001
+    if (this.playVideoModel)
+      this.durationTime = this.playVideoModel.getAvPlayer().duration * 0.001
   }
 
-  getVideoPaused() {
-    let avPlayer = this.playVideoModel?.getAvPlayer();
-    if(avPlayer) {
-      this.paused = avPlayer?.state != AvplayerStatus.PLAYING
-    }
-  }
   onChanged(propName: string): void {
-    console.error('video_test ex onChanged')
-
     this.playVideoModel?.convertResizeMode(this.videoResizeMode)
-    setTimeout(()=>{
-      this.getVideoPaused()
-    },100)
-
   }
 
+  onControlsStylesChange(propName: string){
+    this.hidePosition = this.controlsStyles?.hidePosition?Visibility.Hidden:Visibility.Visible;
+    this.hidePlayPause  = this.controlsStyles?.hidePlayPause?Visibility.Hidden:Visibility.Visible;
+    this.hideSeekBar = this.controlsStyles?.hideSeekBar?Visibility.Hidden:Visibility.Visible;
+    this.hideDuration = this.controlsStyles?.hideDuration?Visibility.Hidden:Visibility.Visible;
+  }
 
   aboutToAppear(): void {
-    console.error('video_test 弹窗拉起 '+ this.videoResizeMode)
-    setTimeout(()=>{
-      this.getVideoPaused()
-    },100)
+    console.info('video_test 弹窗拉起')
+    this.onControlsStylesChange('')
   }
+
   aboutToDisappear(): void {
   }
   setIsVisibility(isShow: boolean) {
@@ -133,6 +131,10 @@ export struct OverlayDialogEx {
                 this.surfaceID = Number(this.xComponentController.getXComponentSurfaceId());
                 this.playVideoModel?.setSurfaceIdEx(this.surfaceID);
                 this.playVideoModel?.convertResizeMode(this.videoResizeMode)
+                let avPlayer = this.playVideoModel?.getAvPlayer();
+                if(avPlayer) {
+                  this.paused = avPlayer?.state != AvplayerStatus.PLAYING
+                }
               })
               .width(this.videoWidth)
               .height(this.videoHeight)
@@ -160,6 +162,7 @@ export struct OverlayDialogEx {
             })
             .width(50)
             .height(50)
+            .visibility(this.hidePlayPause)
           Row() {
             Image( this.paused ? $r('app.media.ic_play') : $r('app.media.ic_pause'))
               .onClick(() => {
@@ -168,11 +171,13 @@ export struct OverlayDialogEx {
               })
               .width(20)
               .height(20)
+              .visibility(this.hidePlayPause)
 
             Text(this.formatSecondsToString(this.currentTime))
               .fontSize('10')
               .fontColor(Color.White)
               .margin({ left: 10 })
+              .visibility(this.hidePosition)
 
             Slider({
               value: this.currentTime,
@@ -190,11 +195,14 @@ export struct OverlayDialogEx {
               })
               .width('60%')
               .margin({ left: 5 })
+              .visibility(this.hideSeekBar)
+
 
             Text(this.formatSecondsToString(this.durationTime))
               .fontSize('10')
               .fontColor(Color.White)
               .margin({ left: 5 })
+              .visibility(this.hideDuration)
 
           }.width("90%")
           .height("20%")
@@ -214,7 +222,7 @@ export struct OverlayDialogEx {
     }
     .backgroundColor('#000000')
     .width('100%')
-    .height('105%')
+    .height('100%')
 
     // 如果需要使用border属性或cornerRadius属性，请和borderRadius属性一起使用。
   }

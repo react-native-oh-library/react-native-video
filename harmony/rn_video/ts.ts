@@ -23,3 +23,5 @@
  */
 export * from "./src/main/ets/RNCVideoPackage"
 export * from "./src/main/ets/RNCVideoTurboModule"
+export * from "./src/main/ets/VideoDecoderInfoTurboModule"
+export * from "./src/main/ets/VideoManagerTurboModule"

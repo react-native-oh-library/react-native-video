@@ -24,20 +24,101 @@
 
 #pragma once
 #include "RNOH/Package.h"
-#include "RNCVideoComponentDescriptor.h"
-#include "RNCVideoViewJSIBinder.h"
-#include "RNCVideoViewNapiBinder.h"
-#include "RNCVideoEventEmitRequestHandler.h"
+#include <react/renderer/components/react_native_video/ComponentDescriptors.h>
+#include "RNOH/generated/components/RNCVideoJSIBinder.h"
+#include "RNOH/generated/components/RNCVideoViewNapiBinder.h"
+#include "RNOH/generated/turbo_modules/VideoDecoderInfoModule.h"
+#include "RNOH/generated/turbo_modules/VideoManager.h"
+#include "glog/logging.h"
+
 
 using namespace rnoh;
 using namespace facebook;
 
 namespace rnoh {
 
+class BaseReactNativeVideoPackageTurboModuleFactoryDelegate : public TurboModuleFactoryDelegate {
+  public:
+    SharedTurboModule createTurboModule(Context ctx, const std::string &name) const override {
+        if (name == "VideoDecoderInfoModule") {
+            return std::make_shared<VideoDecoderInfoModule>(ctx, name);
+        }
+        if (name == "VideoManager") {
+            return std::make_shared<VideoManager>(ctx, name);
+        }
+        return nullptr;
+    };
+};
+
+class BaseReactNativeVideoPackageEventEmitRequestHandler : public EventEmitRequestHandler {
+  public:
+    void handleEvent(Context const &ctx) override {
+        auto eventEmitter = ctx.shadowViewRegistry->getEventEmitter<facebook::react::EventEmitter>(ctx.tag);
+        if (eventEmitter == nullptr) {
+            return;
+        }
+
+        std::vector<std::string> supportedComponentNames = {
+            "RNCVideo",
+        };
+
+        std::vector<std::string> supportedEventNames = {
+            "controlsVisibilityChange",
+            "videoLoad",
+            "videoLoadStart",
+            "videoAspectRatio",
+            "videoBuffer",
+            "videoError",
+            "videoProgress",
+            "videoBandwidthUpdate",
+            "videoSeek",
+            "videoEnd",
+            "videoAudioBecomingNoisy",
+            "videoFullscreenPlayerWillPresent",
+            "videoFullscreenPlayerDidPresent",
+            "videoFullscreenPlayerWillDismiss",
+            "videoFullscreenPlayerDidDismiss",
+            "readyForDisplay",
+            "playbackRateChange",
+            "volumeChange",
+            "videoExternalPlaybackChange",
+            "getLicense",
+            "pictureInPictureStatusChanged",
+            "restoreUserInterfaceForPictureInPictureStop",
+            "receiveAdEvent",
+            "videoPlaybackStateChanged",
+            "videoIdle",
+            "audioFocusChanged",
+            "timedMetadata",
+            "audioTracks",
+            "textTracks",
+            "textTrackDataChanged",
+            "videoTracks",
+        };
+
+        if (std::find(supportedEventNames.begin(), supportedEventNames.end(), ctx.eventName) != supportedEventNames.end()) {
+            eventEmitter->dispatchEvent(ctx.eventName, ArkJS(ctx.env).getDynamic(ctx.payload));
+        }
+    }
+};
+
+class RNCVideoArkTsMessage : public ArkTSMessageHandler {
+    void handleArkTSMessage(const Context &ctx) override
+    {
+        auto rnInstance = ctx.rnInstance.lock();
+        if (rnInstance) {
+        }
+    }
+};
+
 class RNCVideoPackage : public Package {
 public:
     RNCVideoPackage(Package::Context ctx) : Package(ctx) {}
-
+    
+    std::unique_ptr<TurboModuleFactoryDelegate> createTurboModuleFactoryDelegate() override {
+        return std::make_unique<BaseReactNativeVideoPackageTurboModuleFactoryDelegate>();
+    }
+    
     std::vector<facebook::react::ComponentDescriptorProvider> createComponentDescriptorProviders() override 
     {
         return {
@@ -47,7 +128,7 @@ public:
 
     ComponentJSIBinderByString createComponentJSIBinderByName() override 
     {
-        return {{"RNCVideo", std::make_shared<RNCVideoViewJSIBinder>()}};
+        return {{"RNCVideo", std::make_shared<RNCVideoJSIBinder>()}};
     };
 
     ComponentNapiBinderByString createComponentNapiBinderByName() override
@@ -57,7 +138,12 @@ public:
 
     EventEmitRequestHandlers createEventEmitRequestHandlers() override
     {
-        return {std::make_shared<RNCVideoEventEmitRequestHandler>()};
+        return {std::make_shared<BaseReactNativeVideoPackageEventEmitRequestHandler>()};
+    }
+    
+    std::vector<ArkTSMessageHandler::Shared> createArkTSMessageHandlers() override
+    {
+        return { std::make_shared<RNCVideoArkTsMessage>() };
     }
 };
 } // namespace rnoh
