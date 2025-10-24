@@ -33,7 +33,6 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { display, LengthMetrics, LengthUnit } from '@kit.ArkUI';
 import {OverlayDialogEx} from './OverlayDialogEx'
 import { AvplayerStatus } from '../common/constants/CommonConstants';
-import { OverlayDialog } from './OverlayDialog'
 
 export interface IPlayPlayer {
   muted: boolean
@@ -111,7 +110,7 @@ export struct PlayPlayer {
   @Consume ('extFullscreenVar') extFullscreen: boolean;
 
   dialogController: CustomDialogController | null = new CustomDialogController({
-    builder: OverlayDialog({
+    builder: OverlayDialogEx({
       cancel: ()=> {
         this.onCancel()
       },
