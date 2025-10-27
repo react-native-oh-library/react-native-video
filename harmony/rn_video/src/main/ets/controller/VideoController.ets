@@ -320,7 +320,6 @@ export class VideoController {
           this.pipManager.init(getContext(this))
           break;
         case AvplayerStatus.PLAYING:
-          this.onReadyForDisplay();
           this.status = CommonConstants.STATUS_START;
           this.playPageThis.onVideoPlaybackStateChanged(true, this.isSeeking);
           this.watchStatus();

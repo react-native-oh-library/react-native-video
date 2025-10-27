@@ -203,11 +203,6 @@ export struct RNCVideo {
     case EventType.SETLICENSERESULTERRORCMD:
       break;
     case EventType.SETFULLSCREENCMD:
-      if (this.fullscreen) {
-        this.onVideoFullscreenPlayerWillPresent()
-      } else {
-        this.onVideoFullscreenPlayerWillDismiss()
-      }
       this.playVideoModel.pipManager.stopPip()
 
       const _fullscreen: boolean = eventData.data?.fullScreen;
