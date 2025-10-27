@@ -282,6 +282,7 @@ export struct PlayPlayer {
     if(this.fullscreen == true)
     {
       if (this.dialogController != null) {
+        this.playVideoModel?.playPageThis.onVideoFullscreenPlayerWillPresent();
         this.videoSrc = this.srcParam
         this.videoResizeMode = this.resizeMode
         this.startTime = this.startSecond
@@ -290,6 +291,7 @@ export struct PlayPlayer {
         this.playVideoModel?.playPageThis.onVideoFullscreenPlayerDidPresent();
       }
     } else {
+      this.playVideoModel?.playPageThis?.onVideoFullscreenPlayerWillDismiss();
       this.setModalVisible(false)
       this.playVideoModel?.playPageThis?.onVideoFullscreenPlayerDidDismiss();
     }
