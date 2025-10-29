@@ -30,7 +30,7 @@ import Matrix4 from '@ohos.matrix4'
 import mediaquery from '@ohos.mediaquery'
 import fs from '@ohos.file.fs';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { display } from '@kit.ArkUI';
+import { display, LengthMetrics, LengthUnit } from '@kit.ArkUI';
 import {OverlayDialogEx} from './OverlayDialogEx'
 import { AvplayerStatus } from '../common/constants/CommonConstants';
 import { PipManager, PipManagerInitProps } from '../model/PipManager';
@@ -115,9 +115,12 @@ export struct PlayPlayer {
 
   dialogController: CustomDialogController | null = new CustomDialogController({
     builder: OverlayDialogEx({
-      playVideoModel: this.playVideoModel,
-      cancel: ()=> { this.onCancel() },
-      confirm: ()=> { this.onAccept() },
+      cancel: ()=> {
+        this.onCancel()
+      },
+      confirm: ()=> {
+        this.onAccept()
+      },
       videoSrc: $videoSrc,
       videoResizeMode: $videoResizeMode,
     }),
@@ -284,8 +287,7 @@ export struct PlayPlayer {
 
   fullscreenChanged(propName: string): void {
     Logger.debug(TAG, `fullscreenChanged, ${JSON.stringify(this.fullscreen)}`);
-    if(this.fullscreen == true)
-    {
+    if(this.fullscreen == true){
       if (this.dialogController != null) {
         this.videoSrc = this.srcParam
         this.videoResizeMode = this.resizeMode
@@ -358,6 +360,7 @@ export struct PlayPlayer {
       this.isVisibility = Visibility.Hidden
     }
   }
+
   setModalVisible(isShow: boolean){
     this.isModalVisible = isShow
   }
@@ -381,13 +384,17 @@ export struct PlayPlayer {
   }
   onCancel() {
     console.info('video_test Callback when the first button is clicked')
-    this.playVideoModel?.setSurfaceIdEx(0);
-    this.paused = this.playVideoModel?.getAvPlayer()?.state != AvplayerStatus.PLAYING
-    this.playVideoModel?.convertResizeMode(this.resizeMode);
+
+    this.playVideoModel?.setSeekTime(this.startTime)
+    console.info('video_test startTime1 = ' + this.startTime)
+    this.startSecond = this.startTime
+    this.paused = false
   }
+
   onAccept() {
     console.info('Callback when the second button is clicked')
   }
+
   exitApp() {
     console.info('Click the callback in the blank area')
   }
@@ -407,7 +414,6 @@ export struct PlayPlayer {
               surfaceHeight: PlayConstants.PLAY_PLAYER.SURFACE_HEIGHT
             });
             this.surfaceID = Number(this.xComponentController.getXComponentSurfaceId());
-            this.playVideoModel?.setSurfaceId(this.surfaceID);
             this.preparePlayer().then((src) => {
               if (this.playVideoModel) {
                 this.playVideoModel.firstPlay(this.index, src, this.surfaceID);
@@ -430,87 +436,114 @@ export struct PlayPlayer {
         Row() {
         }.height("20%")
 
-        Image(this.paused ? $r('app.media.ic_play') : $r('app.media.ic_pause'))
-          .width(50)
-          .height(50)
-          .onClick(() => {
-            this.paused = !this.paused
-            this.isUserPaused = this.paused
-          })
         Row() {
           Image(this.paused ? $r('app.media.ic_play') : $r('app.media.ic_pause'))
-            .width(20)
-            .height(20)
+            .width(50)
+            .height(50)
             .onClick(() => {
               this.paused = !this.paused
               this.isUserPaused = this.paused
             })
-          Text(this.formatSecondsToString(this.startSecond))
-            .fontSize('10')
-            .fontColor(Color.White)
-            .margin({ left: 10 })
+        }.height("60%")
 
-          Slider({
-            value: this.startSecond,
-            min: 0,
-            max: this.duration
-          })
-            .width(this.sliderWidth)
-            .margin({ left: 5 })
-            .onChange((value: number, mode: SliderChangeMode) => {
-              let seekValue: number = value
-              //滑块滑动结束后再设置seek
-              if (mode == SliderChangeMode.End || mode == SliderChangeMode.Click) {
-                if (this.repeat && value == this.duration) {
-                  return
-                }
-                if ((this.repeat == undefined || this.repeat == false) && value == this.duration) {
-                  seekValue = 0
-                  //判断是否手动触发滑块，如果是就设置seek
-                  if (this.isProgressSliding) {
-                    this.startSecond = seekValue
-                    this.playVideoModel?.setSeekTime(seekValue)
-                    this.paused = true
-                    return
-                   //判断是否手动触发滑块，如果不是就直接返回
-                  } else {
+        Column() {
+
+
+          Flex({direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.SpaceAround}) {
+            Image(this.paused ? $r('app.media.ic_play') : $r('app.media.ic_pause'))
+              .width(20)
+              .height(20)
+              .onClick(() => {
+                this.paused = !this.paused
+                this.isUserPaused = this.paused
+              })
+            Text(this.formatSecondsToString(this.startSecond))
+              .textAlign(TextAlign.Center)
+              .fontSize('10')
+              .width(80)
+              .fontColor(Color.White)
+              // .margin({ left: 10 })
+
+            Slider({
+              value: this.startSecond,
+              min: 0,
+              max: this.duration
+            })
+            // .flexBasis('auto')
+            // .width(this.sliderWidth)
+            // .margin({ left: 5 })
+              .onChange((value: number, mode: SliderChangeMode) => {
+                let seekValue: number = value
+                //滑块滑动结束后再设置seek
+                if (mode == SliderChangeMode.End || mode == SliderChangeMode.Click) {
+                  if (this.repeat && value == this.duration) {
                     return
                   }
+                  if ((this.repeat == undefined || this.repeat == false) && value == this.duration) {
+                    seekValue = 0
+                    //判断是否手动触发滑块，如果是就设置seek
+                    if (this.isProgressSliding) {
+                      this.startSecond = seekValue
+                      this.playVideoModel?.setSeekTime(seekValue)
+                      this.paused = true
+                      return
+                      //判断是否手动触发滑块，如果不是就直接返回
+                    } else {
+                      return
+                    }
+                  }
+                  setTimeout(
+                    () => this.playVideoModel?.setSeekTime(seekValue)
+                    , 100);
                 }
-                setTimeout(
-                  () => this.playVideoModel?.setSeekTime(seekValue)
-                  , 100);
-              }
-            })
-            .onTouch((event: TouchEvent) => {
-              //判断手松开再设置seek,增加一个定时器
-              if (event.type === TouchType.Up) {
-                this.sliderTimer = setTimeout(() => {
-                  this.isProgressSliding = false;
-                }, 200);
-              } else {
-                clearTimeout(this.sliderTimer);
-                this.isProgressSliding = true;
-              }
-            })
+              })
+              .onTouch((event: TouchEvent) => {
+                //判断手松开再设置seek,增加一个定时器
+                if (event.type === TouchType.Up) {
+                  this.sliderTimer = setTimeout(() => {
+                    this.isProgressSliding = false;
+                  }, 200);
+                } else {
+                  clearTimeout(this.sliderTimer);
+                  this.isProgressSliding = true;
+                }
+              })
 
-          Text(this.formatSecondsToString(this.duration))
-            .fontSize('10')
-            .fontColor(Color.White)
-            .margin({ left: 5 })
+            Text(this.formatSecondsToString(this.duration))
+              .textAlign(TextAlign.Center)
+              .width(80)
+              .fontSize('10')
+              .fontColor(Color.White)
+            // .margin({ left: 5 })
 
-        }.width("90%")
+          }
+          // .alignItems(VerticalAlign.Center)
+          .width("100%")
+          .padding({left: 10})
+          // .justifyContent(FlexAlign.Center)
+
+
+        }
+        .width("100%")
         .height("20%")
-        .alignItems(VerticalAlign.Center)
-        Row(){
+        .padding({
+          bottom: 20
+        })
+        .justifyContent(FlexAlign.End)
+        .alignItems(HorizontalAlign.Center)
+
+
+        Row() {
           Button('全屏')
             .onClick(() => {
+              //   console.info('video_test ' + this.srcParam)
               if (this.dialogController != null) {
                 this.videoSrc = this.srcParam
                 this.videoResizeMode = this.resizeMode
                 this.startTime = this.startSecond
-                // this.paused = true
+                this.paused = true
                 this.dialogController.open()
+                //  setTimeout((): void => this.setModalVisible(false), 5000);
               }
             }).visibility(Visibility.None)
         }
