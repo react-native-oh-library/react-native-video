@@ -818,6 +818,8 @@ public:
     bool controls{false};
     double currentPlaybackTime{0.0};
     bool disableFocus{false};
+    bool enterPictureInPictureOnLeave{false};
+    bool navigationId{};
     RNCVideoFilter filter{RNCVideoFilter::NONE};
     bool filterEnabled{false};
     bool fullscreen{false};

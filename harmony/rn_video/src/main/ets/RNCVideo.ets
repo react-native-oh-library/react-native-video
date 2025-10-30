@@ -31,6 +31,7 @@ import { CommonConstants, ResizeMode } from './common/constants/CommonConstants'
 import Logger from './common/util/Logger';
 import { display } from '@kit.ArkUI';
 import observer from '@ohos.arkui.observer';
+import { PipManager } from './model/PipManager';
 
 interface NavDestinationState {
   navigationId: string
@@ -63,6 +64,9 @@ export interface RNCVideoProps extends ViewBaseProps {
   paused: boolean
   resizeMode: string
   muted: boolean
+  pictureInPicture: boolean
+  enterPictureInPictureOnLeave: boolean
+  navigationId: string
   repeat: boolean
   volume: number
   disableFocus: boolean
@@ -84,6 +88,7 @@ export interface IRNCVideo {
   viewHeight: number
   onVideoLoadStart: (cUri: string | media.AVFileDescriptor) => void
   onReadyForDisplay: () => void
+  onPictureInPictureStatusChanged: (isActive: boolean) => void
   onVideoProgress: (currentTime: number, _playableDuration: number, _seekableDuration: number) => void
   onVideoLoad: (startSecond: number, length: number, widthIn: number, heightIn: number, orientationIn: string) => void
   onVideoBuffer: (isBufferingIn: boolean) => void
@@ -103,6 +108,9 @@ export struct RNCVideo {
   @Provide('srcVar') srcParam: string | media.AVFileDescriptor = ''; /*最终avplayer认识的 字符串*/
   @Provide index: number = 0;
   @Provide('mutedVar') muted: boolean = false;
+  @Provide('pictureInPictureVar') pictureInPicture: boolean = false;
+  @Provide('enterPictureInPictureOnLeaveVar') enterPictureInPictureOnLeave: boolean = false;
+  @Provide('navigationIdVar') navigationId: string = '';
   @Provide('fullscreenVar') fullscreen: boolean = false;
 
   @Provide ('extFullscreenVar') @Watch("extFullscreenChanged") extFullscreen: boolean = false;
@@ -154,6 +162,7 @@ export struct RNCVideo {
       }
     ))
     this.playVideoModel.initPlayPageThis(this as IRNCVideo);
+    PipManager.getInstance().initPlayPageThis(this as IRNCVideo);
     /*------ 初始化 -------*/
     this.updatePropFromDesc();
     this.registerCommandCallback();
@@ -196,6 +205,9 @@ export struct RNCVideo {
   /* 更新属性变更  */
   updatePropFromDesc(): void {
     this.muted = this.descriptor.rawProps.muted
+    this.pictureInPicture = this.descriptor.rawProps.pictureInPicture
+    this.enterPictureInPictureOnLeave = this.descriptor.rawProps.enterPictureInPictureOnLeave
+    this.navigationId = this.descriptor.rawProps.navigationId
     this.paused = this.descriptor.rawProps.paused
     this.isUserPaused = this.descriptor.rawProps.paused
     this.controls = this.descriptor.rawProps.controls
@@ -279,6 +291,15 @@ export struct RNCVideo {
     if (this.ctx) {
       this.ctx.rnInstance.emitComponentEvent(this.descriptor.tag, RNC_VIDEO_TYPE, {
         type: "onReadyForDisplay"
+      })
+    }
+  }
+
+  onPictureInPictureStatusChanged(isActive: boolean): void {
+    if (this.ctx) {
+      this.ctx.rnInstance.emitComponentEvent(this.descriptor.tag, RNC_VIDEO_TYPE, {
+        type: "onPictureInPictureStatusChanged",
+        isActive: isActive
       })
     }
   }

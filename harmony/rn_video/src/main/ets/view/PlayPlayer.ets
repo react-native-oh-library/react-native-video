@@ -33,6 +33,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { display, LengthMetrics, LengthUnit } from '@kit.ArkUI';
 import {OverlayDialogEx} from './OverlayDialogEx'
 import { AvplayerStatus } from '../common/constants/CommonConstants';
+import { PipManager, PipManagerInitProps } from '../model/PipManager';
 
 export interface IPlayPlayer {
   muted: boolean
@@ -60,6 +61,9 @@ export struct PlayPlayer {
   @Consume('srcVar') @Watch("onSrcChanged") srcParam: string; // 视频src
   @Consume index: number;
   @Consume('mutedVar') @Watch("onMutedChanged") muted: boolean;
+  @Consume('pictureInPictureVar') @Watch("onPictureInPictureChanged") pictureInPicture: boolean;
+  @Consume('enterPictureInPictureOnLeaveVar') @Watch("onEnterPictureInPictureOnLeaveChanged") enterPictureInPictureOnLeave: boolean;
+  @Consume('navigationIdVar') @Watch("onNavigationIdChanged") navigationId: string;
   @Consume('fullscreenVar') @Watch("fullscreenChanged") fullscreen: boolean;
   @Consume('repeatVar') @Watch("onRepeatChanged") repeat: boolean;
   @Consume('rateVar') @Watch("onChanged") rate: number;
@@ -157,6 +161,24 @@ export struct PlayPlayer {
     }
   }
 
+  initPip(): void {
+    const otherInitParams: PipManagerInitProps = {
+      isInitialAutoStartEnabled: this.enterPictureInPictureOnLeave,
+      playVideoModal: this.playVideoModel,
+      isInitialStartPip: this.pictureInPicture,
+      navigationId: this.navigationId,
+      contentSize: {
+        contentWidth: this.changedViewWidth,
+        contentHeight: this.changedViewHeight,
+      }
+    }
+    PipManager.getInstance().init(this.getUIContext().getHostContext() as Context, this.xComponentController, otherInitParams);
+  }
+
+  onDidBuild(): void {
+    this.initPip();
+  }
+
   closeFsRawFd() {
     if (typeof this.previousSrc === "string") {
       getContext(this).resourceManager.closeRawFd(this.previousSrc, (error: BusinessError) => {
@@ -183,6 +205,8 @@ export struct PlayPlayer {
       this.playVideoModel.release()
       this.closeFsRawFd()
     }
+    PipManager.getInstance().unregisterPipStateChangeListener();
+    PipManager.getInstance().setAutoStart(false);
   }
 
   // @Watch cb
@@ -245,6 +269,22 @@ export struct PlayPlayer {
     }
   }
 
+  onPictureInPictureChanged(propName: string): void {
+    Logger.debug(TAG, `onPictureInPictureChanged, ${JSON.stringify(this.pictureInPicture)}`);
+    this.pictureInPicture ? PipManager.getInstance().startPip() : PipManager.getInstance().stopPip();
+  }
+
+  onEnterPictureInPictureOnLeaveChanged(propName: string): void {
+    Logger.debug(TAG, `onEnterPictureInPictureOnLeaveChanged, ${JSON.stringify(this.enterPictureInPictureOnLeave)}`);
+    PipManager.getInstance().setAutoStart(this.enterPictureInPictureOnLeave)
+  }
+
+  onNavigationIdChanged(propName: string): void {
+    Logger.debug(TAG, `onNavigationIdChanged, ${JSON.stringify(this.navigationId)}`);
+    // navigationId改变后需要重新初始化画中画
+    this.initPip();
+  }
+
   fullscreenChanged(propName: string): void {
     Logger.debug(TAG, `fullscreenChanged, ${JSON.stringify(this.fullscreen)}`);
     if(this.fullscreen == true){
@@ -271,6 +311,9 @@ export struct PlayPlayer {
     if (this.playVideoModel) {
       this.playVideoModel.switchPlayOrPause(this.paused);
     }
+
+    // 视频播放状态改变时更新画中画控制区的按钮状态
+    PipManager.getInstance().updatePipControlStatus(this.paused);
   }
 
   onControlsChanged(propName: string): void {

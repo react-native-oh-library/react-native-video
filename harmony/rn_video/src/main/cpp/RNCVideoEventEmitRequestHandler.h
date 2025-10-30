@@ -45,6 +45,7 @@ enum RNCVideoEventType {
     RNC_VIDEO_PLAYBACK_RESUME = 9,
     RNC_VIDEO_READY_FOR_DISPLAY = 10,
     RNC_VIDEO_FULLSCREEN_PLAYER_DIDDISMISS = 11,
+    RNC_VIDEO_PICTURE_IN_PICTURE_STATUS_CHANGED = 12,
 };
 
 RNCVideoEventType getRNCVideoEventType(ArkJS &arkJs, napi_value eventObject)
@@ -72,6 +73,8 @@ RNCVideoEventType getRNCVideoEventType(ArkJS &arkJs, napi_value eventObject)
         return RNCVideoEventType::RNC_VIDEO_PLAYBACK_RESUME;
     }else if (eventType == "onReadyForDisplay"){
         return RNCVideoEventType::RNC_VIDEO_READY_FOR_DISPLAY;
+    }else if (eventType == "onPictureInPictureStatusChanged"){
+        return RNCVideoEventType::RNC_VIDEO_PICTURE_IN_PICTURE_STATUS_CHANGED;
     }else if (eventType == "videoFullscreenPlayerDidDismiss"){
         return RNCVideoEventType::RNC_VIDEO_FULLSCREEN_PLAYER_DIDDISMISS;
     }
@@ -198,6 +201,15 @@ public:
                 react::RNCVideoEventEmitter::OnReadyForDisplay event{};
                 LOG(INFO) << "RNCVideoEventEmitRequestHandler OnReadyForDisplay:" ;
                 eventEmitter->onReadyForDisplay(event);
+                break;
+            }
+            case RNCVideoEventType::RNC_VIDEO_PICTURE_IN_PICTURE_STATUS_CHANGED: 
+            {
+                bool isActive = arkJs.getBoolean(arkJs.getObjectProperty(ctx.payload, "isActive"));
+                
+                react::RNCVideoEventEmitter::OnPictureInPictureStatusChanged event{isActive};
+                LOG(INFO) << "RNCVideoEventEmitRequestHandler OnPictureInPictureStatusChanged:" ;
+                eventEmitter->onPictureInPictureStatusChanged(event);
                 break;
             }
              case RNCVideoEventType::RNC_VIDEO_FULLSCREEN_PLAYER_DIDDISMISS: 
