@@ -1,5 +1,3 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
-
 这是一个 [**React Native**](https://reactnative.dev) 工程，包含react-native-video的HarmonyOS侧示例和调试
 
 # 运行example示例
@@ -10,10 +8,7 @@ react-native-video**根目录**安装依赖
 
 ```bash
 # using npm
-npm start
-
-# OR using Yarn
-yarn start
+npm install
 ```
 
 ## Step 2: examples目录依赖
@@ -26,10 +21,14 @@ cd ./examples
 
 ```bash
 # using npm
-npm start
+npm install
+```
 
-# OR using Yarn
-yarn start
+安装video依赖
+
+```bash
+# using npm
+npm run install:video
 ```
 
 ## Step 3: 编译RN的bundle

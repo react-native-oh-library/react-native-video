@@ -7,7 +7,8 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "dev": "react-native bundle-harmony --dev"
+    "dev": "react-native bundle-harmony --dev",
+    "install:video": "cd ../ && npm pack && cd ./examples && npm i file:../react-native-oh-tpl-react-native-video-5.2.3-rc.4.tgz"
   },
   "dependencies": {
     "@react-native-oh-tpl/react-native-video": "file:..",
