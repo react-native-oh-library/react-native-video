@@ -115,6 +115,7 @@ export struct PlayPlayer {
 
   dialogController: CustomDialogController | null = new CustomDialogController({
     builder: OverlayDialogEx({
+      playVideoModel: this.playVideoModel,
       cancel: ()=> {
         this.onCancel()
       },
@@ -384,11 +385,8 @@ export struct PlayPlayer {
   }
   onCancel() {
     console.info('video_test Callback when the first button is clicked')
-
-    this.playVideoModel?.setSeekTime(this.startTime)
-    console.info('video_test startTime1 = ' + this.startTime)
-    this.startSecond = this.startTime
-    this.paused = false
+    this.playVideoModel?.setSurfaceIdEx(0);
+    this.paused = this.playVideoModel?.getAvPlayer()?.state != AvplayerStatus.PLAYING
   }
 
   onAccept() {

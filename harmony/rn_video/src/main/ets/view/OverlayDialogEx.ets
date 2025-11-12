@@ -133,6 +133,10 @@ export struct OverlayDialogEx {
                 this.surfaceID = Number(this.xComponentController.getXComponentSurfaceId());
                 this.playVideoModel?.setSurfaceIdEx(this.surfaceID);
                 this.playVideoModel?.convertResizeMode(this.videoResizeMode)
+                let avPlayer = this.playVideoModel?.getAvPlayer();
+                if(avPlayer) {
+                  this.paused = avPlayer?.state != AvplayerStatus.PLAYING
+                }
               })
               .width(this.videoWidth)
               .height(this.videoHeight)
