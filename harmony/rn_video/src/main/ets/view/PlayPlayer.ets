@@ -154,7 +154,7 @@ export struct PlayPlayer {
       }
     },
     alignment: DialogAlignment.Bottom,
-    offset: { dx: 0, dy: -20 },
+    offset: { dx: 0, dy: 0 },
     gridCount: 4,
     customStyle: true,
     cornerRadius: 0,
