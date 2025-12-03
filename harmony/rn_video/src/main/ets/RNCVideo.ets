@@ -123,6 +123,7 @@ export struct RNCVideo {
   @Provide('currentPlaybackTimeV') currentPlaybackTime : number = 0.00;
   @Provide('preventsDisplaySleepDuringVideoPlaybackVar') preventsDisplaySleepDuringVideoPlayback: boolean =
     true; /* 默认true*/
+  @StorageProp('onForeground') @Watch('foregroundPlay') onForeground: boolean = true;
   @State
   viewWidth: number = 0;
   @State
@@ -416,5 +417,13 @@ export struct RNCVideo {
     }
   }
 
+  foregroundPlay() {
+    if(this.onForeground) {
+      if(!this.isUserPaused) {
+        this.playVideoModel?.switchPlayOrPause(false)
+        this.paused = false;
+      }
+    }
+  }
 
 }

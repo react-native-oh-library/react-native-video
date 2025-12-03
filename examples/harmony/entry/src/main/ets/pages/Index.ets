@@ -50,6 +50,14 @@ struct Index {
     return true
   }
 
+  onPageShow(): void {
+    AppStorage.setOrCreate('onForeground', true)
+  }
+
+  onPageHide(): void {
+    AppStorage.setOrCreate('onForeground', false)
+  }
+
   build() {
     Column() {
       if (this.rnohCoreContext && this.shouldShow) {
